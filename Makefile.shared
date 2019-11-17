@@ -196,7 +196,7 @@ link_app.gnu:
 link_shlib.linux-shared:
 	@$(PERL) $(SRCDIR)/util/mkdef.pl $(LIBNAME) linux >$(LIBNAME).map; \
 	$(DO_GNU_SO); \
-	ALLSYMSFLAGS='-Wl,--whole-archive,--version-script=$(LIBNAME).map'; \
+	ALLSYMSFLAGS='-Wl,--whole-archive'; \
 	$(LINK_SO_SHLIB)
 
 link_dso.bsd:
