@@ -170,7 +170,7 @@ int SMX_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 {
 	int ret = 0;
 	EC_GROUP *group = NULL;
-	EC_POINT *Ppube = NULL;
+	EC_POINT *Ppub1 = NULL;
 	EC_POINT *C = NULL;
 	EVP_MD_CTX *md_ctx = NULL;
 	BN_CTX *bn_ctx = NULL;
@@ -207,7 +207,7 @@ int SMX_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 	}
 
 	if (!(group = EC_GROUP_new_by_curve_name(NID_sm9bn256v1))
-		|| !(Ppube = EC_POINT_new(group))
+		|| !(Ppub1 = EC_POINT_new(group))
 		|| !(C = EC_POINT_new(group))
 		|| !(md_ctx = EVP_MD_CTX_new())
 		|| !(bn_ctx = BN_CTX_new())) {
@@ -221,7 +221,7 @@ int SMX_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 	}
 
 	/* parse Ppube1 */
-	if (!EC_POINT_oct2point(group, Ppube, ASN1_STRING_get0_data(mpk->pointPpub1),
+	if (!EC_POINT_oct2point(group, Ppub1, ASN1_STRING_get0_data(mpk->pointPpub1),
 		ASN1_STRING_length(mpk->pointPpub1), bn_ctx)) {
 		SM9err(SM9_F_SM9_WRAP_KEY, SM9_R_INVALID_POINTPPUB);
 		goto end;
@@ -246,11 +246,11 @@ int SMX_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 		goto end;
 	}
 
-	/* parse Q_B = H1(ID_B||hid) * P1 + Ppube */
+	/* parse Q_B = H1(ID_B||hid) * P1 + Ppub1 */
 	// we should check mpk->hash1
 	if (!SMX_hash1(hash1_md, &h, id, idlen, SMX_HID_ENC, n, bn_ctx)
 		|| !EC_POINT_mul(group, C, h, NULL, NULL, bn_ctx)
-		|| !EC_POINT_add(group, C, C, Ppube, bn_ctx)) {
+		|| !EC_POINT_add(group, C, C, Ppub1, bn_ctx)) {
 		ERR_print_errors_fp(stderr);
 		SM9err(SMX_F_SMX_WRAP_KEY, ERR_R_EC_LIB);
 		goto end;
@@ -325,7 +325,7 @@ int SMX_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 
 end:
 	EC_GROUP_free(group);
-	EC_POINT_free(Ppube);
+	EC_POINT_free(Ppub1);
 	EC_POINT_free(C);
 	EVP_MD_CTX_free(md_ctx);
 	if (bn_ctx) {

@@ -203,28 +203,29 @@ SMX_KEY *SMX_MASTER_KEY_extract_key(SMX_MASTER_KEY *master,
 	}
 
 	/* generate (Ppubs, ds) or (Ppube, de) */
-	if (scheme == NID_sm9sign) {
+	// if (scheme == NID_sm9sign) {
 
-		/* publicPoint = h1 * P2 + Ppub2 */
-		point_t Ppubs;
-		point_t point;
-		if (!point_init_smx(&point, ctx)
-			|| !point_init_smx(&Ppubs, ctx)
-			|| ASN1_STRING_length(master->pointPpub2) != sizeof(buf)
-			|| !point_from_octets_smx(&Ppubs, ASN1_STRING_get0_data(master->pointPpub2), p, ctx)
-			|| !point_mul_smx_generator(&point, t, p, ctx)
-			|| !point_add_smx(&point, &point, &Ppubs, p, ctx)
-			|| !point_to_octets_smx(&point, buf, ctx)
-			|| !ASN1_OCTET_STRING_set(sk->publicPoint, buf, sizeof(buf))) {
-			SM9err(SMX_F_SMX_MASTER_KEY_EXTRACT_KEY, ERR_R_SM9_LIB);
-			point_cleanup_smx(&Ppubs);
-			point_cleanup_smx(&point);
-			goto end;
-		}
-		point_cleanup_smx(&Ppubs);
-		point_cleanup_smx(&point);
+	// 	/* publicPoint = h1 * P2 + Ppub2 */
+	// 	point_t Ppubs;
+	// 	point_t point;
+	// 	if (!point_init_smx(&point, ctx)
+	// 		|| !point_init_smx(&Ppubs, ctx)
+	// 		|| ASN1_STRING_length(master->pointPpub2) != sizeof(buf)
+	// 		|| !point_from_octets_smx(&Ppubs, ASN1_STRING_get0_data(master->pointPpub2), p, ctx)
+	// 		|| !point_mul_smx_generator(&point, t, p, ctx)
+	// 		|| !point_add_smx(&point, &point, &Ppubs, p, ctx)
+	// 		|| !point_to_octets_smx(&point, buf, ctx)
+	// 		|| !ASN1_OCTET_STRING_set(sk->publicPoint, buf, sizeof(buf))) {
+	// 		SM9err(SMX_F_SMX_MASTER_KEY_EXTRACT_KEY, ERR_R_SM9_LIB);
+	// 		point_cleanup_smx(&Ppubs);
+	// 		point_cleanup_smx(&point);
+	// 		goto end;
+	// 	}
+	// 	point_cleanup_smx(&Ppubs);
+	// 	point_cleanup_smx(&point);
 
-	} else {
+	// } else 
+	{
 
 		/* publicPoint = h1 * P1 + Ppub1 */
 		EC_POINT *Ppube = NULL;

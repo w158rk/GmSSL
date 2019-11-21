@@ -96,15 +96,19 @@ SMXSignature *SMX_SignFinal(EVP_MD_CTX *ctx1, SMXPrivateKey *sk)
 	EVP_MD_CTX *ctx2 = NULL;
 	EC_GROUP *group = NULL;
 	EC_POINT *S = NULL;
+	EC_POINT *Q = NULL;
+	EC_POINT *Ppub1 = NULL;
 	BN_CTX *bn_ctx = NULL;
 	BIGNUM *r = NULL;
-	point_t Ppubs;
+	point_t Ppub2;
 	fp12_t w;
 
 	if (!(sig = SMXSignature_new())
 		|| !(ctx2 = EVP_MD_CTX_new())
 		|| !(group = EC_GROUP_new_by_curve_name(NID_sm9bn256v1))
 		|| !(S = EC_POINT_new(group))
+		|| !(Q = EC_POINT_new(group))
+		|| !(Ppub1 = EC_POINT_new(group))
 		|| !(bn_ctx = BN_CTX_new())) {
 		SM9err(SMX_F_SMX_SIGNFINAL, ERR_R_MALLOC_FAILURE);
 		goto end;
@@ -112,20 +116,40 @@ SMXSignature *SMX_SignFinal(EVP_MD_CTX *ctx1, SMXPrivateKey *sk)
 	BN_CTX_start(bn_ctx);
 	if (!(r = BN_CTX_get(bn_ctx))
 		|| !fp12_init_smx(w, bn_ctx)
-		|| !point_init_smx(&Ppubs, bn_ctx)) {
+		|| !point_init_smx(&Ppub2, bn_ctx)) {
 		SM9err(SMX_F_SMX_SIGNFINAL, ERR_R_MALLOC_FAILURE);
 		goto end;
 	}
 
-
-	/* get Ppubs */
-	if (ASN1_STRING_length(sk->pointPpub2) != 129
-		|| !point_from_octets_smx(&Ppubs, ASN1_STRING_get0_data(sk->pointPpub2), p, bn_ctx)) {
+	/* get Ppub1 */
+	if (ASN1_STRING_length(sk->pointPpub1) != 65
+		|| !EC_POINT_oct2point(group, Ppub1, 
+			ASN1_STRING_get0_data(sk->pointPpub1),
+			ASN1_STRING_length(sk->pointPpub1), bn_ctx)) {
 		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_INVALID_POINTPPUB);
 		goto end;
 	}
-	/* g = e(P1, Ppubs) */
-	if (!rate_pairing_smx(w, &Ppubs, EC_GROUP_get0_generator(group), bn_ctx)) {
+
+	/* get Q */
+	if (ASN1_STRING_length(sk->publicPoint) != 65
+		|| !EC_POINT_oct2point(group, Q, 
+			ASN1_STRING_get0_data(sk->publicPoint),
+			ASN1_STRING_length(sk->publicPoint), bn_ctx)) {
+		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_INVALID_POINTPPUB);
+		goto end;
+	}
+
+
+	/* get Ppub2 */
+	if (ASN1_STRING_length(sk->pointPpub2) != 129
+		|| !point_from_octets_smx(&Ppub2, ASN1_STRING_get0_data(sk->pointPpub2), p, bn_ctx)) {
+		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_INVALID_POINTPPUB);
+		goto end;
+	}
+
+
+	/* g = e(Q, Ppub2) */
+	if (!rate_pairing_smx(w, &Ppub2, Q, bn_ctx)) {
 		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_PAIRING_ERROR);
 		goto end;
 	}
@@ -176,6 +200,7 @@ SMXSignature *SMX_SignFinal(EVP_MD_CTX *ctx1, SMXPrivateKey *sk)
 		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_INVALID_PRIVATE_POINT);
 		goto end;
 	}
+
 	/* S = l * sk */
 	len = sizeof(buf);
 	if (!EC_POINT_mul(group, S, NULL, S, r, bn_ctx)
@@ -193,8 +218,10 @@ end:
 	EVP_MD_CTX_free(ctx2);
 	EC_GROUP_free(group);
 	EC_POINT_free(S);
+	EC_POINT_free(Ppub1);
+	EC_POINT_free(Q);
 	BN_free(r);
-	point_cleanup_smx(&Ppubs);
+	point_cleanup_smx(&Ppub2);
 	fp12_cleanup_smx(w);
 	BN_CTX_end(bn_ctx);
 	BN_CTX_free(bn_ctx);
@@ -241,24 +268,26 @@ int SMX_VerifyFinal(EVP_MD_CTX *ctx1, const SMXSignature *sig, SMXPublicKey *pk)
 	EVP_MD_CTX *ctx2 = NULL;
 	EC_GROUP *group = NULL;
 	EC_POINT *S = NULL;
+	EC_POINT *Q = NULL;
+	EC_POINT *Ppub1 = NULL;
 	BN_CTX *bn_ctx = NULL;
 	BIGNUM *h = NULL;
-	point_t Ppubs;
-	point_t P;
+	point_t Ppub2;
 	fp12_t w;
 	fp12_t u;
 
 	if (!(ctx2 = EVP_MD_CTX_new())
 		|| !(group = EC_GROUP_new_by_curve_name(NID_sm9bn256v1))
 		|| !(S = EC_POINT_new(group))
+		|| !(Q = EC_POINT_new(group))
+		|| !(Ppub1 = EC_POINT_new(group))
 		|| !(bn_ctx = BN_CTX_new())) {
 		SM9err(SMX_F_SMX_VERIFYFINAL, ERR_R_MALLOC_FAILURE);
 		goto end;
 	}
 	BN_CTX_start(bn_ctx);
 	if (!(h = BN_CTX_get(bn_ctx))
-		|| !point_init_smx(&Ppubs, bn_ctx)
-		|| !point_init_smx(&P, bn_ctx)
+		|| !point_init_smx(&Ppub2, bn_ctx)
 		|| !fp12_init_smx(w, bn_ctx)
 		|| !fp12_init_smx(u, bn_ctx)) {
 		SM9err(SMX_F_SMX_VERIFYFINAL, ERR_R_MALLOC_FAILURE);
@@ -276,13 +305,47 @@ int SMX_VerifyFinal(EVP_MD_CTX *ctx1, const SMXSignature *sig, SMXPublicKey *pk)
 		goto end;
 	}
 
-	/* g = e(P1, Ppubs) */
+
+	/* h1 = H1(ID||hid, N) */
+	// if (!(md = smxhash1_to_md(pk->hash1))) {
+	// 	SM9err(SMX_F_SMX_VERIFYFINAL, SMX_R_INVALID_HASH1);
+	// 	goto end;
+	// }
+	// if (!SMX_hash1(md, &h, (const char *)ASN1_STRING_get0_data(pk->identity),
+	// 	ASN1_STRING_length(pk->identity), SMX_HID_SIGN, n, bn_ctx)) {
+	// 	SM9err(SMX_F_SMX_VERIFYFINAL, ERR_R_SM9_LIB);
+	// 	goto end;
+	// }
+
+
+	/* get Ppub1 */
+	if (ASN1_STRING_length(pk->pointPpub1) != 65
+		|| !EC_POINT_oct2point(group, Ppub1, 
+			ASN1_STRING_get0_data(pk->pointPpub1),
+			ASN1_STRING_length(pk->pointPpub1), bn_ctx)) {
+		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_INVALID_POINTPPUB);
+		goto end;
+	}
+
+	/* get Q */
+	if (ASN1_STRING_length(pk->publicPoint) != 65
+		|| !EC_POINT_oct2point(group, Q, 
+			ASN1_STRING_get0_data(pk->publicPoint),
+			ASN1_STRING_length(pk->publicPoint), bn_ctx)) {
+		SM9err(SMX_F_SMX_SIGNFINAL, SMX_R_INVALID_POINTPPUB);
+		goto end;
+	}
+
+
+	/* get Ppub2 */
 	if (ASN1_STRING_length(pk->pointPpub2) != 129
-		|| !point_from_octets_smx(&Ppubs, ASN1_STRING_get0_data(pk->pointPpub2), p, bn_ctx)) {
+		|| !point_from_octets_smx(&Ppub2, ASN1_STRING_get0_data(pk->pointPpub2), p, bn_ctx)) {
 		SM9err(SMX_F_SMX_VERIFYFINAL, SMX_R_INVALID_POINTPPUB);
 		goto end;
 	}
-	if (!rate_pairing_smx(w, &Ppubs, EC_GROUP_get0_generator(group), bn_ctx)) {
+
+	/* g = e(Q, Ppub2) */
+	if (!rate_pairing_smx(w, &Ppub2, Q, bn_ctx)) {
 		SM9err(SMX_F_SMX_VERIFYFINAL, SMX_R_PAIRING_ERROR);
 		goto end;
 	}
@@ -293,28 +356,16 @@ int SMX_VerifyFinal(EVP_MD_CTX *ctx1, const SMXSignature *sig, SMXPublicKey *pk)
 		goto end;
 	}
 
-	/* h1 = H1(ID||hid, N) */
-	if (!(md = smxhash1_to_md(pk->hash1))) {
-		SM9err(SMX_F_SMX_VERIFYFINAL, SMX_R_INVALID_HASH1);
-		goto end;
-	}
-	if (!SMX_hash1(md, &h, (const char *)ASN1_STRING_get0_data(pk->identity),
-		ASN1_STRING_length(pk->identity), SMX_HID_SIGN, n, bn_ctx)) {
-		SM9err(SMX_F_SMX_VERIFYFINAL, ERR_R_SM9_LIB);
-		goto end;
-	}
 
-	/* P = h1 * P2 + Ppubs */
-	if (!point_mul_smx_generator(&P, h, p, bn_ctx)
-		|| !point_add_smx(&P, &P, &Ppubs, p, bn_ctx)
-		/* u = e(sig->S, P) */
-		|| !rate_pairing_smx(u, &P, S, bn_ctx)
-		/* w = u * t */
+	/* w = u * t */
+	if (!rate_pairing_smx(u, NULL, S, bn_ctx)
 		|| !fp12_mul_smx(w, u, w, p, bn_ctx)
 		|| !fp12_to_bin_smx(w, buf)) {
 		SM9err(SMX_F_SMX_VERIFYFINAL, SMX_R_EXTENSION_FIELD_ERROR);
 		goto end;
 	}
+
+
 
 	/* h2 = H2(M||w) mod n */
 	if (!EVP_DigestUpdate(ctx1, buf, sizeof(buf))
@@ -350,9 +401,10 @@ end:
 	EVP_MD_CTX_free(ctx2);
 	EC_GROUP_free(group);
 	EC_POINT_free(S);
+	EC_POINT_free(Q);
+	EC_POINT_free(Ppub1);
 	BN_free(h);
-	point_cleanup_smx(&Ppubs);
-	point_cleanup_smx(&P);
+	point_cleanup_smx(&Ppub2);
 	fp12_cleanup_smx(w);
 	fp12_cleanup_smx(u);
 	BN_CTX_end(bn_ctx);
