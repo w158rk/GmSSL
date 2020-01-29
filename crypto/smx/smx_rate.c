@@ -55,6 +55,19 @@
 #include <openssl/err.h>
 #include "smx_lcl.h"
 
+const char inv_unit_data[4][65] = {
+	"0000000000000000000000000000000000000000000000000000000000000000\0",
+	"0000000000000000000000000000000000000000000000000000000000000000\0",
+	"0000000000000000000000000000000000000000000000000000000000000000\0",
+	"5B2000000151D378EB01D5A7FAC763A290F949A58D3D776DF2B7CD93F1A8A2BE\0"
+};
+const char *inv_unit[4] = {
+	inv_unit_data, 
+	inv_unit_data[1],
+	inv_unit_data[2],
+	inv_unit_data[3]
+};
+
 
 static int fp2_init(fp2_t a, BN_CTX *ctx)
 {
@@ -1167,6 +1180,27 @@ static int fp12_set_w_sqr(fp12_t r)
 	return fp4_set_one(r[2]);
 }
 
+static int fp12_set_w_inv(fp12_t r)
+{
+	fp4_set_zero(r[0]);
+	fp4_set_zero(r[1]);
+	return fp4_set_hex(r[2], inv_unit);
+}
+
+static int fp12_set_w_sqr_inv(fp12_t r)
+{
+	fp4_set_zero(r[0]);
+	fp4_set_zero(r[2]);
+	return fp4_set_hex(r[1], inv_unit);
+}
+
+static int fp12_set_v_inv(fp12_t r)
+{
+	fp4_set_zero(r[2]);
+	fp4_set_zero(r[1]);
+	return fp4_set_hex(r[0], inv_unit);
+}
+
 static int fp12_equ(const fp12_t a, const fp12_t b)
 {
 	return fp4_equ(a[0], b[0])
@@ -1896,6 +1930,97 @@ static int point_get_affine_coordinates(const point_t *P, fp2_t x, fp2_t y)
 		&& fp2_is_one(P->Z);
 }
 
+static int point_get_affine_coordinates_affine(const point_t *P, fp2_t x, fp2_t y, const BIGNUM* p, BN_CTX *ctx)
+{
+	/**
+	 * x = X/Z^2 
+	 * y = Y/Z^3
+	*/
+	int r;
+	fp2_t w, w2, w3, tx, ty;
+
+	r = 1;
+	r &= fp2_init(tx, ctx);
+	r &= fp2_init(ty, ctx);
+	r &= fp2_init(w, ctx);
+	r &= fp2_init(w2, ctx);
+	r &= fp2_init(w3, ctx);
+
+	if(!r)
+	{
+		goto end;
+	}
+
+	r = 0;
+
+	if(!fp2_inv(w, P->Z, p, ctx)
+		|| !fp2_sqr(w2, w, p, ctx)
+		|| !fp2_mul(tx, P->X, w2, p, ctx)
+		|| !fp2_mul(w3, w, w2, p, ctx)
+		|| !fp2_mul(ty, P->Y, w3, p, ctx))
+	{
+		goto end;
+	}
+
+	r = fp2_copy(x, tx) && fp2_copy(y, ty);
+
+end:
+	return r;
+}
+
+static int point_get_ext_affine_coordinates_affine(const point_t *P, fp12_t x, fp12_t y, fp12_t z, const BIGNUM *p, BN_CTX *ctx)
+{
+	int r;
+	fp2_t xP;
+	fp2_t yP;
+	fp2_t zP;
+	fp12_t wem;
+	fp12_t wem2;
+	fp12_t wem3;
+
+	r = 1;
+	r &= fp2_init(xP, ctx);
+	r &= fp2_init(yP, ctx);
+	r &= fp2_init(zP, ctx);
+	r &= fp12_init_smx(wem, ctx);
+	r &= fp12_init_smx(wem2, ctx);
+	r &= fp12_init_smx(wem3, ctx);
+	if (!r) {
+		goto end;
+	}
+
+	r = 0;
+	if (!fp2_copy(xP, P->X)
+		|| !fp2_copy(yP, P->Y)
+		|| !fp2_copy(zP, P->Z)	/* if necessary */
+		|| !fp12_set_fp2(x, xP)
+		|| !fp12_set_fp2(y, yP)
+		|| !fp12_set_fp2(z, zP)
+
+		/* x = x * w^-2 */
+		|| !fp12_set_w_sqr_inv(wem2)
+		|| !fp12_mul_smx(x, x, wem2, p, ctx)
+
+		/* y = y * w^-3 */
+		|| !fp12_set_v_inv(wem3)
+		|| !fp12_mul_smx(y, y, wem3, p, ctx)
+		
+		/* z is unchanged */) {
+		goto end;
+	}
+
+	r = 1;
+
+end:
+	fp2_cleanup(xP);
+	fp2_cleanup(yP);
+	fp2_cleanup(zP);
+	fp12_cleanup_smx(wem2);
+	fp12_cleanup_smx(wem3);
+	fp12_cleanup_smx(wem);
+	return r;
+}
+
 static int point_get_ext_affine_coordinates(const point_t *P, fp12_t x, fp12_t y, const BIGNUM *p, BN_CTX *ctx)
 {
 	int r;
@@ -1919,16 +2044,15 @@ static int point_get_ext_affine_coordinates(const point_t *P, fp12_t x, fp12_t y
 		|| !fp12_set_fp2(y, yP)
 
 		/* x = x * w^-2 */
-		|| !fp12_set_w_sqr(wem2)
-		|| !fp12_inv(wem2, wem2, p, ctx)
+		|| !fp12_set_w_sqr_inv(wem2)
 		|| !fp12_mul_smx(x, x, wem2, p, ctx)
 
 		/* y = y * w^-3 */
-		|| !fp12_set_v(wem3)
-		|| !fp12_inv(wem3, wem3, p, ctx)
+		|| !fp12_set_v_inv(wem3)
 		|| !fp12_mul_smx(y, y, wem3, p, ctx)) {
 		//goto end;
 	}
+
 	r = 1;
 
 end:
@@ -1938,6 +2062,8 @@ end:
 	fp12_cleanup_smx(wem3);
 	return r;
 }
+
+
 
 static int point_set_ext_affine_coordinates(point_t *P, const fp12_t x, const fp12_t y, const BIGNUM *p, BN_CTX *ctx)
 {
@@ -1987,6 +2113,7 @@ int point_is_on_curve_smx(point_t *P, const BIGNUM *p, BN_CTX *ctx)
 	r = fp2_equ(x, y);
 
 end:
+	
 	fp2_cleanup(x);
 	fp2_cleanup(y);
 	fp2_cleanup(t);
@@ -2023,6 +2150,95 @@ int point_from_octets_smx(point_t *P, const unsigned char from[129], const BIGNU
 	fp2_from_bin(P->Y, from + 65);
 	fp2_set_one(P->Z);
 	return point_is_on_curve_smx(P, p, ctx);
+}
+
+// P is represented in the affine coordinate
+static int point_dbl_affine(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
+{
+	int r;
+	fp2_t x3, y3, z3, x1, y1, z1, tmp, s, m;
+
+	r = 1;
+	r &= fp2_init(x1, ctx);
+	r &= fp2_init(y1, ctx);
+	r &= fp2_init(z1, ctx);
+	r &= fp2_init(x3, ctx);
+	r &= fp2_init(y3, ctx);
+	r &= fp2_init(z3, ctx);
+	r &= fp2_init(tmp, ctx);
+	r &= fp2_init(s, ctx);
+	r &= fp2_init(m, ctx);
+
+	if (!r) {
+		goto end;
+	}
+
+	if (point_is_at_infinity(P)) {
+		r = point_set_to_infinity(R);
+		goto end;
+	}
+
+	if(!fp2_copy(x1, P->X)
+		|| !fp2_copy(y1, P->Y)
+		|| !fp2_copy(z1, P->Z))
+	{
+		r = 0;
+		goto end;
+	}
+
+	if (/*s = 4XY^2*/
+		!fp2_sqr(s, y1, p, ctx)
+		|| !fp2_mul(s, s, x1, p, ctx)
+		|| !fp2_dbl(s, s, p, ctx)
+		|| !fp2_dbl(s, s, p, ctx)
+
+		/* m = 3X^2 */
+		|| !fp2_sqr(m, x1, p, ctx)
+		|| !fp2_tri(m, m, p, ctx)
+
+		/* x3 = m^2-2s */
+		|| !fp2_sqr(x3, m, p, ctx)
+		|| !fp2_sub(x3, x3, s, p, ctx)
+		|| !fp2_sub(x3, x3, s, p, ctx)
+
+		/* y3 = m(s-x3) - 8Y^4 */
+		|| !fp2_sub(y3, s, x3, p, ctx)
+		|| !fp2_mul(y3, y3, m, p, ctx)
+		|| !fp2_sqr(tmp, y1, p, ctx)
+		|| !fp2_dbl(tmp, tmp, p, ctx)
+		|| !fp2_sqr(tmp, tmp, p, ctx)
+		|| !fp2_dbl(tmp, tmp, p, ctx)
+		|| !fp2_sub(y3, y3, tmp, p, ctx)
+
+		/* z3 = 2YZ*/
+		|| !fp2_mul(z3, y1, z1, p, ctx)
+		|| !fp2_dbl(z3, z3, p, ctx)) {
+		r = 0;
+		goto end;
+	}
+
+	r = fp2_copy(R->X, x3)
+		&& fp2_copy(R->Y, y3)
+		&& fp2_copy(R->Z, z3);
+
+end:
+	fp2_cleanup(x1);
+	fp2_cleanup(y1);
+	fp2_cleanup(z1);
+	fp2_cleanup(x3);
+	fp2_cleanup(y3);
+	fp2_cleanup(z3);
+	fp2_cleanup(tmp);
+	fp2_cleanup(s);
+	fp2_cleanup(m);
+	return r;
+}
+
+static int point_neg(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
+{
+	return fp2_copy(R->X, P->X)
+		&& fp2_neg(R->Y, P->Y, p, ctx)
+		&& fp2_copy(R->Z, P->Z);
 }
 
 static int point_dbl(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
@@ -2078,6 +2294,148 @@ end:
 	fp2_cleanup(t);
 	return r;
 }
+
+static int point_add_smx_affine(point_t *R, const point_t *P, const point_t *Q, const BIGNUM *p, BN_CTX *ctx)
+{
+	/**
+	 * P is presented as (X,Y,Z)
+	 * while Q is presented as (x,y,1)
+	 */
+	int r = 0;
+	fp2_t x1;
+	fp2_t y1;
+	fp2_t z1;
+	fp2_t x2;
+	fp2_t y2;
+	fp2_t x3;
+	fp2_t y3;
+	fp2_t z3;
+	fp2_t t;
+	fp2_t s;
+	fp2_t tmp;
+
+	if (point_is_at_infinity(P)) {
+		return point_copy_smx(R, Q);
+	}
+
+	if (point_is_at_infinity(Q)) {
+		return point_copy_smx(R, P);
+	}
+
+	if (!fp2_is_one(Q->Z))
+	{
+		goto end;
+	}
+
+
+	r = 1;
+	r &= fp2_init(x1, ctx);
+	r &= fp2_init(y1, ctx);
+	r &= fp2_init(z1, ctx);
+	r &= fp2_init(x2, ctx);
+	r &= fp2_init(y2, ctx);
+	r &= fp2_init(x3, ctx);
+	r &= fp2_init(y3, ctx);
+	r &= fp2_init(z3, ctx);
+	r &= fp2_init(t, ctx);
+	r &= fp2_init(s, ctx);
+	r &= fp2_init(tmp, ctx);
+	if (!r) {
+		goto end;
+	}
+
+	r = 0;
+
+
+	if (!fp2_copy(x1, P->X)
+		|| !fp2_copy(y1, P->Y)
+		|| !fp2_copy(z1, P->Z)
+		|| !point_get_affine_coordinates(Q, x2, y2)) {
+		goto end;
+	}
+
+	if(/* s = xZ^2 */
+		!fp2_sqr(tmp, z1, p, ctx)
+		|| !fp2_mul(s, x2, tmp, p, ctx)
+		
+		/* t = yZ^3 */
+		|| !fp2_mul(tmp, tmp, z1, p, ctx)
+		|| !fp2_mul(t, y2, tmp, p, ctx)) {
+			goto end;
+	}
+
+	if(fp2_equ(s, x1))
+	{
+		if(fp2_equ(t, y1))
+		{
+			// if P = Q, then xZ^2 = X && yZ^3 = Y
+			return point_dbl(R, P, p, ctx); 
+		}
+
+		else 
+		{
+			// P=-Q
+			r = point_set_to_infinity(R);
+			goto end;
+		}
+	}
+
+
+	/* lambda = (y2 - y1)/(x2 - x1) */
+	if (/* t = xZ^2 - X */
+		!fp2_sqr(t, z1, p, ctx)
+		|| !fp2_mul(t, t, x2, p, ctx)
+		|| !fp2_sub(t, t, x1, p, ctx)
+
+		/* s = yZ^3 - Y */
+		|| !fp2_sqr(s, z1, p, ctx)
+		|| !fp2_mul(s, s, z1, p, ctx)
+		|| !fp2_mul(s, s, y2, p, ctx)
+		|| !fp2_sub(s, s, y1, p, ctx)
+
+		/* x3 = s^2 - t^2(X+xZ^2) */
+		|| !fp2_sqr(tmp, z1, p, ctx)
+		|| !fp2_mul(tmp, tmp, x2, p, ctx)
+		|| !fp2_add(tmp, tmp, x1, p, ctx)
+		|| !fp2_sqr(x3, t, p, ctx)
+		|| !fp2_mul(tmp, x3, tmp, p, ctx)
+		|| !fp2_sqr(x3, s, p, ctx)
+		|| !fp2_sub(x3, x3, tmp, p, ctx)
+		
+		/*y3 = s(Xt^2-x3)-Yt^3*/
+		|| !fp2_sqr(y3, t, p, ctx)
+		|| !fp2_mul(y3, y3, x1, p, ctx)
+		|| !fp2_sub(y3, y3, x3, p, ctx)
+		|| !fp2_mul(y3, y3, s, p, ctx)
+		|| !fp2_sqr(tmp, t, p, ctx)
+		|| !fp2_mul(tmp, tmp, t, p, ctx)
+		|| !fp2_mul(tmp, tmp, y1, p, ctx)
+		|| !fp2_sub(y3, y3, tmp, p, ctx)
+		
+		/*z3 = t * Z1 */
+		|| !fp2_mul(z3, t, z1, p, ctx)) {
+		goto end;
+	}
+
+	r = fp2_copy(R->X, x3)
+		&& fp2_copy(R->Y, y3)
+		&& fp2_copy(R->Z, z3);
+
+end:
+	fp2_cleanup(x1);
+	fp2_cleanup(y1);
+	fp2_cleanup(z1);
+	fp2_cleanup(x2);
+	fp2_cleanup(y2);
+	fp2_cleanup(x3);
+	fp2_cleanup(y3);
+	fp2_cleanup(z3);
+	fp2_cleanup(s);
+	fp2_cleanup(t);
+	fp2_cleanup(tmp);
+	return r;
+}
+
 
 int point_add_smx(point_t *R, const point_t *P, const point_t *Q, const BIGNUM *p, BN_CTX *ctx)
 {
@@ -2148,7 +2506,19 @@ int point_add_smx(point_t *R, const point_t *P, const point_t *Q, const BIGNUM *
 		goto end;
 	}
 
+	// point_t tR;
+	// point_init_smx(&tR, ctx);
+	// fp2_t tx3, ty3;
+	// fp2_init(tx3, ctx);
+	// fp2_init(ty3, ctx);
+
+	// point_add_smx_affine(&tR, P, Q, p, ctx);
+	// point_get_affine_coordinates_affine(&tR, tx3, ty3, p, ctx);
+	// point_set_affine_coordinates(&tR, tx3, ty3);
+	// printf("point is on the curve: %s\n", point_is_on_curve_smx(&tR, p, ctx)?"true":"false");
+
 	r = point_set_affine_coordinates(R, x3, y3);
+
 
 end:
 	fp2_cleanup(x1);
@@ -2162,12 +2532,7 @@ end:
 	return r;
 }
 
-static int point_neg(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
-{
-	return fp2_copy(R->X, P->X)
-		&& fp2_neg(R->Y, P->Y, p, ctx)
-		&& fp2_copy(R->Z, P->Z);
-}
+
 
 static int point_sub(point_t *R, const point_t *P, const point_t *Q, const BIGNUM *p, BN_CTX *ctx)
 {
@@ -2184,8 +2549,9 @@ static int point_sub(point_t *R, const point_t *P, const point_t *Q, const BIGNU
 	return 1;
 }
 
-int point_mul_smx(point_t *R, const BIGNUM *k, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
+int point_mul_smx_affine(point_t *R, const BIGNUM *k, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
 {
+	/* P is presented as (x,y,1) */
 	int i, n;
 
 	if (BN_is_zero(k)) {
@@ -2198,11 +2564,11 @@ int point_mul_smx(point_t *R, const BIGNUM *k, const point_t *P, const BIGNUM *p
 	n = BN_num_bits(k);
 	for (i = n - 2; i >= 0; i--) {
 
-		if (!point_dbl(R, R, p, ctx)) {
+		if (!point_dbl_affine(R, R, p, ctx)) {
 			return 0;
 		}
 		if (BN_is_bit_set(k, i)) {
-			if (!point_add_smx(R, R, P, p, ctx)) {
+			if (!point_add_smx_affine(R, R, P, p, ctx) /*the order of R and P cannot be change*/) {
 				return 0;
 			}
 		}
@@ -2210,6 +2576,46 @@ int point_mul_smx(point_t *R, const BIGNUM *k, const point_t *P, const BIGNUM *p
 
 	return 1;
 }
+
+int point_mul_smx(point_t *R, const BIGNUM *k, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
+{
+	/* R and P cannot be the same*/
+	// int i, n;
+
+	// if (BN_is_zero(k)) {
+	// 	return point_set_to_infinity(R);
+	// }
+
+	// if (!point_copy_smx(R, P)) {
+	// 	return 0;
+	// }
+	// n = BN_num_bits(k);
+	// for (i = n - 2; i >= 0; i--) {
+
+	// 	if (!point_dbl(R, R, p, ctx)) {
+	// 		return 0;
+	// 	}
+	// 	if (BN_is_bit_set(k, i)) {
+	// 		if (!point_add_smx(R, R, P, p, ctx)) {
+	// 			return 0;
+	// 		}
+	// 	}
+	// }
+
+	point_mul_smx_affine(R, k, P, p, ctx);
+
+	fp2_t tx,ty;
+	fp2_init(tx, ctx);
+	fp2_init(ty, ctx);
+
+	point_get_affine_coordinates_affine(R, tx, ty, p, ctx);
+	point_set_affine_coordinates(R, tx, ty);
+	// printf("points are equal:%s\n", point_equ_smx(&tR, R)?"true":"false");
+
+	return 1;
+}
+
+
 
 int point_mul_smx_generator(point_t *R, const BIGNUM *k, const BIGNUM *p, BN_CTX *ctx)
 {
@@ -2329,6 +2735,73 @@ static int point_test(const BIGNUM *p, BN_CTX *ctx)
 }
 #endif
 
+static int eval_tangent_affine(fp12_t r, const point_t *T, const BIGNUM *xP, const BIGNUM *yP,
+	const BIGNUM *p, BN_CTX *ctx)
+{
+	/**
+	 * T is represented as (X,Y,Z)
+	 * r * 2YZ^3 	= 3X^2(xZ^2-X) - 2Y(yZ^3-Y)
+	 * 		 		= 3X^2 * s - 2Y(yZ^3-Y)
+	 * 				= r1 - r2
+	 */
+
+	int ret;
+	fp12_t x, y, s, t;
+	fp12_t xT, yT, zT;
+
+	ret = 1;
+	ret &= fp12_init_smx(x, ctx);
+	ret &= fp12_init_smx(y, ctx);
+	ret &= fp12_init_smx(s, ctx);
+	ret &= fp12_init_smx(t, ctx);
+	ret &= fp12_init_smx(xT, ctx);
+	ret &= fp12_init_smx(yT, ctx);
+	ret &= fp12_init_smx(zT, ctx);
+	if (!ret) {
+		goto end;
+	}
+
+	point_get_ext_affine_coordinates_affine(T, xT, yT, zT, p, ctx);
+
+	ret = 0;
+	if (!fp12_set_bn(x, xP)
+		|| !fp12_set_bn(y, yP)
+		/* s = xZ^2 - X */
+		|| !fp12_sqr(s, zT, p, ctx)
+		|| !fp12_mul_smx(s, s, x, p, ctx)
+		|| !fp12_sub(s, s, xT, p, ctx)
+
+		/* r1 = 3sX^2 */
+		|| !fp12_sqr(r, xT, p, ctx)
+		|| !fp12_mul_smx(r, s, r, p, ctx)
+		|| !fp12_tri(r, r, p, ctx)
+		
+		/* t = 2Y(yZ^3-Y) */
+		|| !fp12_sqr(t, zT, p, ctx)
+		|| !fp12_mul_smx(t, t, zT, p, ctx)
+		|| !fp12_mul_smx(t, t, y, p, ctx)
+		|| !fp12_sub(t, t, yT, p, ctx)
+		|| !fp12_mul_smx(t, yT, t, p, ctx)
+		|| !fp12_dbl(t, t, p, ctx)
+		
+		/* r = r1 - r2*/
+		|| !fp12_sub(r, r, t, p, ctx)) {
+		goto end;
+	}
+	ret = 1;
+
+end:
+	fp12_cleanup_smx(x);
+	fp12_cleanup_smx(y);
+	fp12_cleanup_smx(xT);
+	fp12_cleanup_smx(yT);
+	fp12_cleanup_smx(zT);
+	fp12_cleanup_smx(s);
+	fp12_cleanup_smx(t);
+	return ret;
+}
+
+
 static int eval_tangent(fp12_t r, const point_t *T, const BIGNUM *xP, const BIGNUM *yP,
 	const BIGNUM *p, BN_CTX *ctx)
 {
@@ -2368,6 +2841,8 @@ static int eval_tangent(fp12_t r, const point_t *T, const BIGNUM *xP, const BIGN
 	}
 	ret = 1;
 
+	/* the function fp12_div does not work properly */
+
 end:
 	fp12_cleanup_smx(x);
 	fp12_cleanup_smx(y);
@@ -2375,6 +2850,58 @@ end:
 	fp12_cleanup_smx(t);
 	return ret;
 }
+
+static int eval_line_affine(fp12_t r,  const point_t *T, const point_t *Q,
+	const BIGNUM *xP, const BIGNUM *yP,
+	const BIGNUM *p, BN_CTX *ctx)
+{
+	int ret;
+	fp12_t x, y, lambda, t;
+	fp12_t xT, yT, xQ, yQ;
+
+	ret = 1;
+	ret &= fp12_init_smx(x, ctx);
+	ret &= fp12_init_smx(y, ctx);
+	ret &= fp12_init_smx(lambda, ctx);
+	ret &= fp12_init_smx(t, ctx);
+	ret &= fp12_init_smx(xT, ctx);
+	ret &= fp12_init_smx(yT, ctx);
+	ret &= fp12_init_smx(xQ, ctx);
+	ret &= fp12_init_smx(yQ, ctx);
+	if (!ret) {
+		goto end;
+	}
+
+	point_get_ext_affine_coordinates(T, xT, yT, p, ctx);
+	point_get_ext_affine_coordinates(Q, xQ, yQ, p, ctx);
+
+	ret = 0;
+	if (!fp12_set_bn(x, xP)
+		|| !fp12_set_bn(y, yP)
+		/* lambda = (yT - yQ)/(xT - xQ) */
+		|| !fp12_sub(lambda, yT, yQ, p, ctx)
+		|| !fp12_sub(t, xT, xQ, p, ctx)
+		|| !fp12_inv(t, t, p, ctx)
+		|| !fp12_mul_smx(lambda, lambda, t, p, ctx)
+
+		/* r = lambda * (x - xQ) - y + yQ */
+		|| !fp12_sub(r, x, xQ, p, ctx)
+		|| !fp12_mul_smx(r, lambda, r, p, ctx)
+		|| !fp12_sub(r, r, y, p, ctx)
+		|| !fp12_add(r, r, yQ, p, ctx)) {
+		goto end;
+	}
+	ret = 1;
+
+
+end:
+	fp12_cleanup_smx(x);
+	fp12_cleanup_smx(y);
+	fp12_cleanup_smx(lambda);
+	fp12_cleanup_smx(t);
+	return ret;
+}
+
 
 static int eval_line(fp12_t r,  const point_t *T, const point_t *Q,
 	const BIGNUM *xP, const BIGNUM *yP,
@@ -2417,6 +2944,7 @@ static int eval_line(fp12_t r,  const point_t *T, const point_t *Q,
 		goto end;
 	}
 	ret = 1;
+
 
 end:
 	fp12_cleanup_smx(x);
@@ -2544,13 +3072,14 @@ static int fast_final_expo(fp12_t r, const fp12_t a, const BIGNUM *k, const BIGN
 	return 1;
 }
 
-static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
+static int rate_affine(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
 	const BIGNUM *a, const BIGNUM *k, const BIGNUM *p, BN_CTX *ctx)
 {
 	int ret = 0;
 	int i, n;
 	point_t T, Q1, Q2;
-	fp12_t g;
+	fp12_t g, corr /* accumulate the coeffs*/, tmp;
+	fp12_t xT, yT, zT;
 
 	memset(&T, 0, sizeof(T));
 	memset(&Q1, 0, sizeof(Q1));
@@ -2560,6 +3089,12 @@ static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
 	point_init_smx(&Q1, ctx);
 	point_init_smx(&Q2, ctx);
 	fp12_init_smx(g, ctx);
+	fp12_init_smx(corr, ctx);
+	fp12_init_smx(tmp, ctx);
+	fp12_init_smx(xT, ctx);
+	fp12_init_smx(yT, ctx);
+	fp12_init_smx(zT, ctx);
+	fp12_set_one(corr);
 
 	fp12_set_one(f);
 	point_copy_smx(&T, Q);
@@ -2568,8 +3103,8 @@ static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
 	for (i = n - 2; i >= 0; i--) {
 		//printf("miller loop %d\n", i);
 
-		/* f = f^2 * g_{T,T}(P) */
-		eval_tangent(g, &T, xP, yP, p, ctx);
+		/* f = f^2 * g_{T,T}(P) * 2YZ^3 */
+		eval_tangent_affine(g, &T, xP, yP, p, ctx);
 
 		//printf("g\n");
 		//fp12_print_smx(g);
@@ -2579,6 +3114,15 @@ static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
 
 		//printf("f\n");
 		//fp12_print_smx(f);
+
+		/* corr *= 2YZ^3 */
+		point_get_ext_affine_coordinates_affine(&T, xT, yT, zT, p, ctx);
+		fp12_sqr(tmp, zT, p, ctx);
+		fp12_mul_smx(tmp, tmp, zT, p, ctx);
+		fp12_mul_smx(tmp, tmp, yT, p, ctx);
+		fp12_dbl(tmp, tmp, p, ctx);
+		fp12_mul_smx(corr, corr, tmp, p, ctx);
+
 
 		/* T = 2 * T */
 		point_dbl(&T, &T, p, ctx);
@@ -2602,11 +3146,15 @@ static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
 
 	}
 
+	fp12_inv(corr, corr, p, ctx);
+	fp12_mul_smx(f, f, corr, p, ctx);
+
 	/* Q1 = (x^p, y^p) */
 	frobenius(&Q1, Q, p, ctx);
 
 	/* Q2 = (x^(p^2), y^(p^2)) */
-	frobenius_twice(&Q2, Q, p, ctx);
+	frobenius(&Q2, &Q1, p, ctx);
+
 
 	/* f = f * g_{T, Q1}(P) */
 	eval_line(g, &T, &Q1, xP, yP, p, ctx);
@@ -2636,6 +3184,104 @@ static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
 	point_cleanup_smx(&Q2);
 	fp12_cleanup_smx(g);
 	return ret;
+}
+
+
+static int rate(fp12_t f, const point_t *Q, const BIGNUM *xP, const BIGNUM *yP,
+	const BIGNUM *a, const BIGNUM *k, const BIGNUM *p, BN_CTX *ctx)
+{
+// 	int ret = 0;
+// 	int i, n;
+// 	point_t T, Q1, Q2;
+// 	fp12_t g;
+
+// 	memset(&T, 0, sizeof(T));
+// 	memset(&Q1, 0, sizeof(Q1));
+// 	memset(&Q2, 0, sizeof(Q2));
+
+// 	point_init_smx(&T, ctx);
+// 	point_init_smx(&Q1, ctx);
+// 	point_init_smx(&Q2, ctx);
+// 	fp12_init_smx(g, ctx);
+
+// 	fp12_set_one(f);
+// 	point_copy_smx(&T, Q);
+
+// 	n = BN_num_bits(a);
+// 	for (i = n - 2; i >= 0; i--) {
+// 		//printf("miller loop %d\n", i);
+
+// 		/* f = f^2 * g_{T,T}(P) */
+// 		eval_tangent(g, &T, xP, yP, p, ctx);
+
+// 		//printf("g\n");
+// 		//fp12_print_smx(g);
+
+// 		fp12_sqr(f, f, p, ctx);
+// 		fp12_mul_smx(f, f, g, p, ctx);
+
+// 		//printf("f\n");
+// 		//fp12_print_smx(f);
+
+// 		/* T = 2 * T */
+// 		point_dbl(&T, &T, p, ctx);
+
+// 		if (BN_is_bit_set(a, i)) {
+// 			/* f = f * g_{T,Q}(P) */
+// 			eval_line(g, &T, Q, xP, yP, p, ctx);
+
+// 			//printf("g\n");
+// 			//fp12_print_smx(g);
+
+
+// 			fp12_mul_smx(f, f, g, p, ctx);
+
+// 			//printf("f\n");
+// 			//fp12_print_smx(f);
+
+// 			/* T = T + Q */
+// 			point_add_smx(&T, &T, Q, p, ctx);
+// 		}
+
+// 	}
+
+// 	/* Q1 = (x^p, y^p) */
+// 	frobenius(&Q1, Q, p, ctx);
+
+// 	/* Q2 = (x^(p^2), y^(p^2)) */
+// 	frobenius(&Q2, &Q1, p, ctx);
+
+
+// 	/* f = f * g_{T, Q1}(P) */
+// 	eval_line(g, &T, &Q1, xP, yP, p, ctx);
+// 	fp12_mul_smx(f, f, g, p, ctx);
+
+// 	/* T = T + Q1 */
+// 	point_add_smx(&T, &T, &Q1, p, ctx);
+
+// 	/* f = f * g_{T, -Q2}(P) */
+// 	point_neg(&Q2, &Q2, p, ctx);
+// 	eval_line(g, &T, &Q2, xP, yP, p, ctx);
+// 	fp12_mul_smx(f, f, g, p, ctx);
+
+// 	/* T = T - Q2 */
+// 	point_add_smx(&T, &T, &Q2, p, ctx);
+
+// #ifdef NOSMX_FAST
+// 	/* f = f^((p^12 - 1)/n) */
+// 	final_expo(f, f, k, p, ctx);
+// #else
+// 	/* f = ((f ^ (p^6-1)) ^ (p^2+1)) ^ [(p^4-p^2+1)/n] */
+// 	fast_final_expo(f, f, k, p, ctx);
+// #endif
+
+	return rate_affine(f, Q, xP, yP, a, k, p, ctx);
+
+	// point_cleanup_smx(&T);
+	// point_cleanup_smx(&Q1);
+	// point_cleanup_smx(&Q2);
+	// fp12_cleanup_smx(g);
+	// return ret;
 }
 
 static int params_test(void)
@@ -2678,6 +3324,7 @@ int rate_pairing_smx(fp12_t r, const point_t *Q, const EC_POINT *P, BN_CTX *ctx)
 	} else {
 		EC_POINT_get_affine_coordinates_GFp(group, P, xP, yP, ctx);
 	}
+
 
 	if (!Q) {
 		point_t P2;

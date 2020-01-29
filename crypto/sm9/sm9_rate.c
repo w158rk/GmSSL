@@ -1896,6 +1896,44 @@ int point_get_affine_coordinates(const point_t *P, fp2_t x, fp2_t y)
 		&& fp2_is_one(P->Z);
 }
 
+int point_get_affine_coordinates_affine(const point_t *P, fp2_t x, fp2_t y, const BIGNUM* p, BN_CTX *ctx)
+{
+	/**
+	 * x = X/Z^2 
+	 * y = Y/Z^3
+	*/
+	int r;
+	fp2_t w, w2, w3, tx, ty;
+
+	r = 1;
+	r &= fp2_init(tx, ctx);
+	r &= fp2_init(ty, ctx);
+	r &= fp2_init(w, ctx);
+	r &= fp2_init(w2, ctx);
+	r &= fp2_init(w3, ctx);
+
+	if(!r)
+	{
+		goto end;
+	}
+
+	r = 0;
+
+	if(!fp2_inv(w, P->Z, p, ctx)
+		|| !fp2_dbl(w2, w, p, ctx)
+		|| !fp2_mul(tx, P->X, w2, p, ctx)
+		|| !fp2_mul(w3, w, w2, p, ctx)
+		|| !fp2_mul(ty, P->Y, w3, p, ctx))
+	{
+		goto end;
+	}
+
+	r = fp2_copy(x, tx) && fp2_copy(y, ty);
+
+end:
+	return r;
+}
+
 int point_get_ext_affine_coordinates(const point_t *P, fp12_t x, fp12_t y, const BIGNUM *p, BN_CTX *ctx)
 {
 	int r;
@@ -2025,6 +2063,92 @@ int point_from_octets(point_t *P, const unsigned char from[129], const BIGNUM *p
 	return point_is_on_curve(P, p, ctx);
 }
 
+// P is represented in the affine coordinate
+int point_dbl_affine(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
+{
+	int r;
+	fp2_t x3, y3, z3, x1, y1, z1, tmp, s, m;
+
+	r = 1;
+	r &= fp2_init(x1, ctx);
+	r &= fp2_init(y1, ctx);
+	r &= fp2_init(z1, ctx);
+	r &= fp2_init(x3, ctx);
+	r &= fp2_init(y3, ctx);
+	r &= fp2_init(z3, ctx);
+	r &= fp2_init(tmp, ctx);
+	r &= fp2_init(s, ctx);
+	r &= fp2_init(m, ctx);
+
+	if (!r) {
+		goto end;
+	}
+
+	if (point_is_at_infinity(P)) {
+		r = point_set_to_infinity(R);
+		goto end;
+	}
+
+	if(!fp2_copy(x1, P->X)
+		|| !fp2_copy(y1, P->Y)
+		|| !fp2_copy(z1, P->Z))
+	{
+		r = 0;
+		goto end;
+	}
+
+	if (/*s = 4XY^2*/
+		!fp2_sqr(s, y1, p, ctx)
+		|| !fp2_mul(s, s, x1, p, ctx)
+		|| !fp2_dbl(s, s, p, ctx)
+		|| !fp2_dbl(s, s, p, ctx)
+
+		/* m = 3(X+Z^2)(X-Z^2) */
+		|| !fp2_sqr(m, z1, p, ctx)
+		|| !fp2_add(tmp, x1, m, p, ctx)
+		|| !fp2_sub(m, x1, m, p, ctx)
+		|| !fp2_mul(m, m, tmp, p, ctx)
+		|| !fp2_tri(m, m, p, ctx)
+
+		/* x3 = m^2-2s */
+		|| !fp2_sqr(x3, m, p, ctx)
+		|| !fp2_sub(x3, x3, s, p, ctx)
+		|| !fp2_sub(x3, x3, s, p, ctx)
+
+		/* y3 = m(s-x3) - 8Y^4 */
+		|| !fp2_sub(y3, s, x3, p, ctx)
+		|| !fp2_mul(y3, y3, m, p, ctx)
+		|| !fp2_sqr(tmp, y1, p, ctx)
+		|| !fp2_dbl(tmp, tmp, p, ctx)
+		|| !fp2_sqr(tmp, tmp, p, ctx)
+		|| !fp2_dbl(tmp, tmp, p, ctx)
+		|| !fp2_sub(y3, y3, tmp, p, ctx)
+
+		/* z3 = 2YZ*/
+		|| !fp2_mul(z3, y1, z1, p, ctx)
+		|| !fp2_dbl(z3, z3, p, ctx)) {
+		r = 0;
+		goto end;
+	}
+
+	r = fp2_copy(R->X, x3)
+		&& fp2_copy(R->Y, y3)
+		&& fp2_copy(R->Z, z3);
+
+end:
+	fp2_cleanup(x1);
+	fp2_cleanup(y1);
+	fp2_cleanup(z1);
+	fp2_cleanup(x3);
+	fp2_cleanup(y3);
+	fp2_cleanup(z3);
+	fp2_cleanup(tmp);
+	fp2_cleanup(s);
+	fp2_cleanup(m);
+	return r;
+}
+
+
 int point_dbl(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
 {
 	int r;
@@ -2069,6 +2193,22 @@ int point_dbl(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
 
 	r = point_set_affine_coordinates(R, x3, y3);
 
+	fp2_t tx3, ty3;
+	fp2_init(tx3, ctx);
+	fp2_init(ty3, ctx);
+	point_t tR;
+	point_init(&tR, ctx);
+
+	point_dbl_affine(&tR, P, p, ctx);
+	point_get_affine_coordinates_affine(&tR, tx3, ty3, p, ctx);
+
+	int flg = 1;
+	flg &= fp2_equ(x3, tx3);
+	flg &= fp2_equ(y3, ty3);
+
+	printf("the two points are equal: %s\n", flg?"true":"false");
+
+
 end:
 	fp2_cleanup(x1);
 	fp2_cleanup(y1);
@@ -2078,6 +2218,8 @@ end:
 	fp2_cleanup(t);
 	return r;
 }
+
+
 
 int point_add(point_t *R, const point_t *P, const point_t *Q, const BIGNUM *p, BN_CTX *ctx)
 {
