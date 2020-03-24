@@ -163,6 +163,23 @@ const BIGNUM *SMX_get0_generator2_x1(void);
 const BIGNUM *SMX_get0_generator2_y0(void);
 const BIGNUM *SMX_get0_generator2_y1(void);
 
+const BIGNUM *SMX_get0_inv_unit(void);
+const BIGNUM *SMX_get0_inv_unit_montgomery(void);
+const BIGNUM *SMX_get0_one_montgomery(void);
+const BIGNUM *SMX_get0_t(void);
+const BIGNUM *SMX_get0_6t5(void);
+const BIGNUM *SMX_get0_6t1(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto1(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto2(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto3(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto4(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto5(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto7(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto8(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto9(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto10(void);
+const BIGNUM *SMX_get0_fast_final_expo_pto11(void);
+
 typedef BIGNUM *fp2_t[2];
 typedef fp2_t fp4_t[2];
 typedef fp4_t fp12_t[3];
@@ -190,6 +207,8 @@ int point_add_smx(point_t *R, const point_t *A, const point_t *B, const BIGNUM *
 int point_mul_smx(point_t *R, const BIGNUM *k, const point_t *P, const BIGNUM *p, BN_CTX *ctx);
 int point_mul_smx_generator(point_t *R, const BIGNUM *k, const BIGNUM *p, BN_CTX *ctx);
 void point_cleanup_smx(point_t *P);
+
+int point_mul_generator_affine(point_t *R, const BIGNUM *k, const BIGNUM *p, BN_CTX *ctx);
 
 int rate_pairing_smx(fp12_t r, const point_t *Q, const EC_POINT *P, BN_CTX *ctx);
 
