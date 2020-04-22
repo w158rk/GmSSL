@@ -433,6 +433,11 @@ static const BN_ULONG _sm9bn256v1_one_montgomery[] =
 	0x29FC54B00A7138BAULL, 0x49BFFFFFFD5C590EULL
 };
 
+static const BN_ULONG _sm9bn256v1_inv_neg_2_montgomery[] = 
+{
+	0xE56F9B27E351457DULL, 0x21F2934B1A7AEEDBULL,
+	0xD603AB4FF58EC745ULL, 0x3640000002A3A6F1ULL
+};
 
 
 static const BN_ULONG _sm9bn256v1_t[] = 
@@ -499,6 +504,14 @@ static const BIGNUM _bignum_sm9bn256v1_inv_unit_montgomery = {
 
 static const BIGNUM _bignum_sm9bn256v1_one_montgomery = {
 	(BN_ULONG *) _sm9bn256v1_one_montgomery,
+	BN_SMX_BN256_TOP,
+	BN_SMX_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_inv_neg_2_montgomery = {
+	(BN_ULONG *) _sm9bn256v1_inv_neg_2_montgomery,
 	BN_SMX_BN256_TOP,
 	BN_SMX_BN256_TOP,
 	0,
@@ -627,6 +640,11 @@ const BIGNUM *SMX_get0_inv_unit_montgomery(void)
 const BIGNUM *SMX_get0_one_montgomery(void)
 {
 	return &_bignum_sm9bn256v1_one_montgomery;
+}
+
+const BIGNUM *SMX_get0_inv_neg_2_montgomery(void)
+{
+	return &_bignum_sm9bn256v1_inv_neg_2_montgomery;
 }
 
 const BIGNUM *SMX_get0_t(void)

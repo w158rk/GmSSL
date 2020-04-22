@@ -166,6 +166,7 @@ const BIGNUM *SMX_get0_generator2_y1(void);
 const BIGNUM *SMX_get0_inv_unit(void);
 const BIGNUM *SMX_get0_inv_unit_montgomery(void);
 const BIGNUM *SMX_get0_one_montgomery(void);
+const BIGNUM *SMX_get0_inv_neg_2_montgomery(void);
 const BIGNUM *SMX_get0_t(void);
 const BIGNUM *SMX_get0_6t5(void);
 const BIGNUM *SMX_get0_6t1(void);
