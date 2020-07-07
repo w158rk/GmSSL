@@ -79,8 +79,8 @@ static int fp2_init(fp2_t a, BN_CTX *ctx)
 {
 	a[0] = NULL;
 	a[1] = NULL;
-	a[0] = BN_CTX_get(ctx);
-	a[1] = BN_CTX_get(ctx);
+	a[0] = BN_new();
+	a[1] = BN_new();
 	/*
 	if (!a[1]) {
 		BN_free(a[0]);
@@ -221,7 +221,7 @@ static int fp2_equ_hex(const fp2_t a, const char *str[2], BN_CTX *ctx)
 static int fp2_add_word(fp2_t r, const fp2_t a, unsigned long b, const BIGNUM *p, BN_CTX *ctx)
 {
 	BIGNUM *w = NULL;
-	if (!(w = BN_CTX_get(ctx))
+	if (!(w = BN_new())
 		|| !BN_set_word(w, b)
 		|| !BN_mod_add_quick(r[0], a[0], w, p)
 		|| !BN_copy(r[1], a[1])) {
@@ -289,10 +289,10 @@ static int fp2_mul_montgomery(fp2_t r, const fp2_t a, const fp2_t b, const BIGNU
 	BIGNUM *t1 = NULL;
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
-	if (!(t = BN_CTX_get(ctx))
-		// || !(t1 = BN_CTX_get(ctx))
-		|| !(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
+	if (!(t = BN_new())
+		// || !(t1 = BN_new())
+		|| !(r0 = BN_new())
+		|| !(r1 = BN_new())
 
 		/* r0 = a0 * b0 - 2 * a1 * b1 */
 		|| !BN_mod_mul_montgomery(r0, a[0], b[0], mont, ctx)
@@ -325,7 +325,7 @@ static int fp2_mul_u_montgomery_123(fp2_t r, const fp2_t a, const BIGNUM *p, BN_
 {
 	/* return a*u */
 	BIGNUM *r0 = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
 
 		/* r0 = -2 * a1 */
 		|| !BN_mod_add_quick(r0, a[1], a[1], p)
@@ -346,9 +346,9 @@ static int fp2_mul_u_montgomery(fp2_t r, const fp2_t a, const fp2_t b, const BIG
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
 	BIGNUM *t = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
-		|| !(t = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
+		|| !(t = BN_new())
 
 		/* r0 = -2 * (a0 * b1 + a1 * b0) */
 		|| !BN_mod_mul_montgomery(r0, a[0], b[1], mont, ctx)
@@ -381,9 +381,9 @@ static int fp2_sqr_montgomery(fp2_t r, const fp2_t a, const BIGNUM *p, BN_MONT_C
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
 	BIGNUM *t = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
-		||!(t = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
+		||!(t = BN_new())
 		/* r0 = a0^2 - 2 * a1^2 */
 		|| !BN_mod_mul_montgomery(r0, a[0], a[0], mont, ctx)
 		|| !BN_mod_mul_montgomery(t, a[1], a[1], mont, ctx)
@@ -411,9 +411,9 @@ static int fp2_sqr_u_montgomery(fp2_t r, const fp2_t a, const BIGNUM *p, BN_MONT
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
 	BIGNUM *t = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
-		|| !(t = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
+		|| !(t = BN_new())
 		/* r0 = -4 * a0 * a1 */
 		|| !BN_mod_mul_montgomery(r0, a[0], a[1], mont, ctx)
 		|| !BN_mod_add_quick(r0, r0, r0, p)
@@ -443,9 +443,9 @@ static int fp2_mul(fp2_t r, const fp2_t a, const fp2_t b, const BIGNUM *p, BN_CT
 	BIGNUM *t = NULL;
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
-	if (!(t = BN_CTX_get(ctx))
-		|| !(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
+	if (!(t = BN_new())
+		|| !(r0 = BN_new())
+		|| !(r1 = BN_new())
 
 		/* r0 = a0 * b0 - 2 * a1 * b1 */
 		|| !BN_mod_mul(r0, a[0], b[0], p, ctx)
@@ -510,9 +510,9 @@ static int fp2_mul_u(fp2_t r, const fp2_t a, const fp2_t b, const BIGNUM *p, BN_
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
 	BIGNUM *t = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
-		|| !(t = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
+		|| !(t = BN_new())
 
 		/* r0 = -2 * (a0 * b1 + a1 * b0) */
 		|| !BN_mod_mul(r0, a[0], b[1], p, ctx)
@@ -577,8 +577,8 @@ static int fp2_mul_num_montgomery(fp2_t r, const fp2_t a, const BIGNUM *n, const
 {
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
 
 		|| !BN_mod_mul_montgomery(r0, a[0], n, mont, ctx)
 		|| !BN_mod_mul_montgomery(r1, a[1], n, mont, ctx)
@@ -599,8 +599,8 @@ static int fp2_mul_num(fp2_t r, const fp2_t a, const BIGNUM *n, const BIGNUM *p,
 {
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
 
 		|| !BN_mod_mul(r0, a[0], n, p, ctx)
 		|| !BN_mod_mul(r1, a[1], n, p, ctx)
@@ -621,9 +621,9 @@ static int fp2_sqr(fp2_t r, const fp2_t a, const BIGNUM *p, BN_CTX *ctx)
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
 	BIGNUM *t = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
-		||!(t = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
+		||!(t = BN_new())
 		/* r0 = a0^2 - 2 * a1^2 */
 		|| !BN_mod_sqr(r0, a[0], p, ctx)
 		|| !BN_mod_sqr(t, a[1], p, ctx)
@@ -684,9 +684,9 @@ static int fp2_sqr_u(fp2_t r, const fp2_t a, const BIGNUM *p, BN_CTX *ctx)
 	BIGNUM *r0 = NULL;
 	BIGNUM *r1 = NULL;
 	BIGNUM *t = NULL;
-	if (!(r0 = BN_CTX_get(ctx))
-		|| !(r1 = BN_CTX_get(ctx))
-		|| !(t = BN_CTX_get(ctx))
+	if (!(r0 = BN_new())
+		|| !(r1 = BN_new())
+		|| !(t = BN_new())
 		/* r0 = -4 * a0 * a1 */
 		|| !BN_mod_mul(r0, a[0], a[1], p, ctx)
 		|| !BN_mod_add_quick(r0, r0, r0, p)
@@ -768,8 +768,8 @@ static int fp2_inv(fp2_t r, const fp2_t a, const BIGNUM *p, BN_CTX *ctx)
 	} else {
 		BIGNUM *k = NULL;
 		BIGNUM *t = NULL;
-		if (!(k = BN_CTX_get(ctx))
-			|| !(t = BN_CTX_get(ctx))
+		if (!(k = BN_new())
+			|| !(t = BN_new())
 
 			/* k = (a[0]^2 + 2 * a[1]^2)^-1 */
 			|| !BN_mod_sqr(k, a[0], p, ctx)
@@ -2448,7 +2448,7 @@ int fp12_fast_expo_p_montgomery(fp12_t r, const fp12_t a, const BIGNUM *p, BN_MO
 
 	fp12_init_smx(t, ctx);
 	BIGNUM *tmp = NULL;
-	BIGNUM *t1 = BN_CTX_get(ctx);
+	BIGNUM *t1 = BN_new();
 
 	BN_copy(t[0][0][0], a[0][0][0]);
 	BN_sub(t[0][0][1], p, a[0][0][1]);
@@ -4031,114 +4031,6 @@ static int frobenius_montgomery(point_t *R, const point_t *P, const BIGNUM *p, B
 }
 
 
-static int frobenius(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
-{
-	fp12_t x, y;
-	fp12_t tx, ty;
-
-	fp12_init_smx(tx, ctx);
-	fp12_init_smx(ty, ctx);
-	fp12_init_smx(x, ctx);
-	fp12_init_smx(y, ctx);
-
-{
-	BIGNUM *t1, *t2, *t3;
-	t1 = BN_CTX_get(ctx);
-	t2 = BN_CTX_get(ctx);
-	t3 = BN_CTX_get(ctx);
-
-	BN_copy(t1, SMX_get0_prime());
-	BN_sub_word(t1, 1ul);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	unsigned long x = BN_mod_word(t1, 6ul);
-	// printf("%ld\n\n", x);
-	BN_div_word(t1, 6ul);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_div_word(t1, 2ul);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_copy(t2, SMX_get0_prime());
-	BN_sub_word(t2, 1);
-	BN_sub_word(t2, 1);
-
-	BN_mod_exp(t3, t2, t1, p, ctx);
-	BN_print_fp(stdout, t3);
-	// printf("\n\n");
-
-	BN_mod_sqr(t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-	BN_mod_mul(t1, t1, t3, p, ctx);
-	BN_print_fp(stdout, t1);
-	// printf("\n\n");
-
-}
-
-
-	point_get_ext_affine_coordinates(P, x, y, p, ctx);
-
-	fp12_fast_expo_p(x, x, p, mont, ctx);
-	fp12_fast_expo_p(y, y, p, mont, ctx);
-
-	// fp12_pow_smx(x, x, p, p, ctx);
-	// fp12_pow_smx(y, y, p, p, ctx);
-	
-
-	point_set_ext_affine_coordinates(R, x, y, p, ctx);
-
-	fp12_cleanup_smx(x);
-	fp12_cleanup_smx(y);
-	return 1;
-}
-
-static int frobenius_twice(point_t *R, const point_t *P, const BIGNUM *p, BN_CTX *ctx)
-{
-	frobenius(R, P, p, ctx);
-	frobenius(R, R, p, ctx);
-	return 1;
-}
 
 
 
@@ -4263,8 +4155,8 @@ static int rate_affine_montgomery(fp12_t f, const point_t *Q, const BIGNUM *xP, 
 	fp12_t g, corr /* accumulate the coeffs*/, tmp;
 	fp12_t xT, yT, zT;
 	BIGNUM *tx, *ty;
-	tx = BN_CTX_get(ctx);
-	ty = BN_CTX_get(ctx);
+	tx = BN_new();
+	ty = BN_new();
 
 	memset(&T, 0, sizeof(T));
 	memset(&Q1, 0, sizeof(Q1));
@@ -4415,8 +4307,8 @@ int rate_pairing_smx(fp12_t r, const point_t *Q, const EC_POINT *P, BN_CTX *ctx)
 #else
 	k = SMX_get0_fast_final_exponent_p3();
 #endif
-	xP = BN_CTX_get(ctx);
-	yP = BN_CTX_get(ctx);
+	xP = BN_new();
+	yP = BN_new();
 
 	if (!P) {
 		EC_POINT_get_affine_coordinates_GFp(group,
