@@ -2448,7 +2448,6 @@ int fp12_fast_expo_p_montgomery(fp12_t r, const fp12_t a, const BIGNUM *p, BN_MO
 
 	fp12_init_smx(t, ctx);
 	BIGNUM *tmp = NULL;
-	BIGNUM *t1 = BN_new();
 
 	BN_copy(t[0][0][0], a[0][0][0]);
 	BN_sub(t[0][0][1], p, a[0][0][1]);
@@ -2456,42 +2455,51 @@ int fp12_fast_expo_p_montgomery(fp12_t r, const fp12_t a, const BIGNUM *p, BN_MO
 	BN_hex2bn(&tmp, exp_montgomery[3]);
 	BN_mod_mul_montgomery(t[0][1][0], a[0][1][0], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 	BN_hex2bn(&tmp, exp_montgomery[9]);
 	BN_mod_mul_montgomery(t[0][1][1], a[0][1][1], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 
 	BN_hex2bn(&tmp, exp_montgomery[1]);
 	BN_mod_mul_montgomery(t[1][0][0], a[1][0][0], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 	BN_hex2bn(&tmp, exp_montgomery[7]);
 	BN_mod_mul_montgomery(t[1][0][1], a[1][0][1], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 
 	BN_hex2bn(&tmp, exp_montgomery[4]);
 	BN_mod_mul_montgomery(t[1][1][0], a[1][1][0], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 	BN_hex2bn(&tmp, exp_montgomery[10]);
 	BN_mod_mul_montgomery(t[1][1][1], a[1][1][1], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 
 	BN_hex2bn(&tmp, exp_montgomery[2]);
 	BN_mod_mul_montgomery(t[2][0][0], a[2][0][0], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 	BN_hex2bn(&tmp, exp_montgomery[8]);
 	BN_mod_mul_montgomery(t[2][0][1], a[2][0][1], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 
 	BN_hex2bn(&tmp, exp_montgomery[5]);
 	BN_mod_mul_montgomery(t[2][1][0], a[2][1][0], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 	BN_hex2bn(&tmp, exp_montgomery[11]);
 	BN_mod_mul_montgomery(t[2][1][1], a[2][1][1], tmp, mont, ctx);
 	BN_clear_free(tmp);
+	tmp = NULL;
 
 	fp12_copy(r, t);
 
 	fp12_cleanup_smx(t);
-	BN_clear_free(t1);
 	return 1;
 }
 
