@@ -1594,7 +1594,7 @@ __owur int SSL_get0_dane_tlsa(SSL *s, uint8_t *usage, uint8_t *selector,
                               uint8_t *mtype, unsigned const char **data,
                               size_t *dlen);
 /*
- * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * Bridge opacity barrier between libcrypt and libgmssl, also needed to support
  * offline testing in test/danetest.c
  */
 SSL_DANE *SSL_get0_dane(SSL *ssl);
@@ -1975,7 +1975,7 @@ int SSL_CTX_set_ct_validation_callback(SSL_CTX *ctx,
 /*
  * The validation type enumerates the available behaviours of the built-in SSL
  * CT validation callback selected via SSL_enable_ct() and SSL_CTX_enable_ct().
- * The underlying callback is a static function in libssl.
+ * The underlying callback is a static function in libgmssl.
  */
 enum {
     SSL_CT_VALIDATION_PERMISSIVE = 0,

@@ -555,8 +555,8 @@ static int cryptodev_cleanup(EVP_CIPHER_CTX *ctx)
 }
 
 /*
- * libcrypto EVP stuff - this is how we get wired to EVP so the engine
- * gets called when libcrypto requests a cipher NID.
+ * libgmcrypto EVP stuff - this is how we get wired to EVP so the engine
+ * gets called when libgmcrypto requests a cipher NID.
  */
 
 /* RC4 */

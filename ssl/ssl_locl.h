@@ -129,7 +129,7 @@
 # include "packet_locl.h"
 # include "internal/dane.h"
 
-# ifdef OPENSSL_BUILD_SHLIBSSL
+# ifdef OPENSSL_BUILD_SHlibgmssl
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif

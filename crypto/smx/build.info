@@ -1,4 +1,4 @@
-LIBS=../../libcrypto
-SOURCE[../../libcrypto]=smx_lib.c smx_err.c smx_asn1.c smx_params.c \
+LIBS=../../libgmcrypto
+SOURCE[../../libgmcrypto]=smx_lib.c smx_err.c smx_asn1.c smx_params.c \
 	smx_setup.c smx_keygen.c smx_sign.c smx_enc.c smx_exch.c smx_rate.c \
 	smx_pmeth.c smx_ameth.c

@@ -37,18 +37,18 @@ $DESCRIPTOR(lnm_process_table, "LNM$PROCESS_TABLE");
 /* The first logical name we deal with, the buffer for its old value,
  * and its temporary new value
  */
-const $DESCRIPTOR(lnm1, "OSSL$LIBCRYPTO{- $sv -}_SHR{- $pz -}");
+const $DESCRIPTOR(lnm1, "OSSL$libgmcrypto{- $sv -}_SHR{- $pz -}");
 char lnm1oldbuf[256]; short lnm1oldlen = 0;
 $DESCRIPTOR(lnm1old, lnm1oldbuf);
-const $DESCRIPTOR(lnm1new, "{- $bldd -}OSSL$LIBCRYPTO{- $sv -}_SHR{- $pz -}.EXE");
+const $DESCRIPTOR(lnm1new, "{- $bldd -}OSSL$libgmcrypto{- $sv -}_SHR{- $pz -}.EXE");
 
 /* The second logical name we deal with, the buffer for its old value,
  * and its temporary new value
  */
-const $DESCRIPTOR(lnm2, "OSSL$LIBSSL{- $sv -}_SHR{- $pz -}");
+const $DESCRIPTOR(lnm2, "OSSL$libgmssl{- $sv -}_SHR{- $pz -}");
 char lnm2oldbuf[256]; short lnm2oldlen = 0;
 $DESCRIPTOR(lnm2old, lnm2oldbuf);
-const $DESCRIPTOR(lnm2new, "{- $bldd -}OSSL$LIBSSL{- $sv -}_SHR{- $pz -}.EXE");
+const $DESCRIPTOR(lnm2new, "{- $bldd -}OSSL$libgmssl{- $sv -}_SHR{- $pz -}.EXE");
 
 /* The foreign command we want to run with the logical names above set
  * to their temporary values

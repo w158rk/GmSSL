@@ -4087,7 +4087,7 @@ static int fast_final_expo_montgomery(fp12_t r, const fp12_t a, const BIGNUM *k,
 	begin = clock();
 	fp12_pow_montgomery(t0, t0, exp_6t5, p, mont, ctx);
 	end = clock();
-	// printf("pow 1: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
+	printf("pow 1: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
 
 	/* t1 = a^(-6u-5)q */
 	fp12_fast_expo_p(t1, t0, p, mont, ctx);
@@ -4098,7 +4098,7 @@ static int fast_final_expo_montgomery(fp12_t r, const fp12_t a, const BIGNUM *k,
 	begin = clock();
 	fp12_pow_montgomery(t, t, exp_6t1, p, mont, ctx);
 	end = clock();
-	// printf("pow 2: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
+	printf("pow 2: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
 
 	fp12_mul_montgomery(t, t0, t, p, mont, ctx);
 	fp12_mul_montgomery(t, t0, t, p, mont, ctx);
@@ -4229,7 +4229,7 @@ static int rate_affine_montgomery(fp12_t f, const point_t *Q, const BIGNUM *xP, 
 
 	} // for
 	end = clock();
-	// printf("miller loop: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
+	printf("miller loop: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
 
 	begin = clock();
 	/* Q1 = (x^p, y^p) */
@@ -4238,7 +4238,7 @@ static int rate_affine_montgomery(fp12_t f, const point_t *Q, const BIGNUM *xP, 
 	/* Q2 = (x^(p^2), y^(p^2)) */
 	frobenius_montgomery(&Q2, &Q1, p, mont, ctx);
 	end = clock();
-	// printf("frobenius: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
+	printf("frobenius: %f msec\n", (double)(end-begin)/CLOCKS_PER_SEC*1000);
 
 	/* f = f * g_{T, Q1}(P) */
 	eval_line_affine_montgomery(g, &T, &Q1, tx, ty, corr, p, mont, ctx);

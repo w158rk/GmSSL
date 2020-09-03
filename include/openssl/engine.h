@@ -737,10 +737,10 @@ typedef int (*dynamic_bind_engine) (ENGINE *e, const char *id,
 /*
  * If the loading application (or library) and the loaded ENGINE library
  * share the same static data (eg. they're both dynamically linked to the
- * same libcrypto.so) we need a way to avoid trying to set system callbacks -
+ * same libgmcrypto.so) we need a way to avoid trying to set system callbacks -
  * this would fail, and for the same reason that it's unnecessary to try. If
  * the loaded ENGINE has (or gets from through the loader) its own copy of
- * the libcrypto static data, we will need to set the callbacks. The easiest
+ * the libgmcrypto static data, we will need to set the callbacks. The easiest
  * way to detect this is to have a function that returns a pointer to some
  * static data and let the loading application and loaded ENGINE compare
  * their respective values.

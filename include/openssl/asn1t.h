@@ -14,7 +14,7 @@
 # include <openssl/e_os2.h>
 # include <openssl/asn1.h>
 
-# ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# ifdef OPENSSL_BUILD_SHlibgmcrypto
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif

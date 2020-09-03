@@ -78,5 +78,5 @@ sub printem()
 }
 
 
-&printem('doc/crypto', 'util/libcrypto.num');
-&printem('doc/ssl', 'util/libssl.num');
+&printem('doc/crypto', 'util/libgmcrypto.num');
+&printem('doc/ssl', 'util/libgmssl.num');

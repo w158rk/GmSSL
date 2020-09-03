@@ -16,10 +16,10 @@ $	!	OSSL$SHARE		Where the shareable image files
 $	!				are located
 $	!	OSSL$EXE		Where the executables are located
 $	!	OSSL$ENGINESnnn		Where the shareable images are located
-$	!	OSSL$LIBCRYPTO		The static crypto library
-$	!	OSSL$LIBSSL		The static ssl library
-$	!	OSSL$LIBCRYPTOnnn_SHR	The shareable crypto image
-$	!	OSSL$LIBSSLnnn_SHR	The shareable ssl image
+$	!	OSSL$libgmcrypto		The static crypto library
+$	!	OSSL$libgmssl		The static ssl library
+$	!	OSSL$libgmcryptonnn_SHR	The shareable crypto image
+$	!	OSSL$libgmsslnnn_SHR	The shareable ssl image
 $	!	OPENSSL			is OSSL$INCLUDE:[OPENSSL]
 $	!
 $	! In all these, nnn is the OpenSSL version number.  This allows
@@ -31,8 +31,8 @@ $	! In addition, unless P2 is "NOALIASES", these logical names are
 $	! created:
 $	!
 $	!	OSSL$ENGINES		Alias for OSSL$ENGINESnnn
-$	!	OSSL$LIBCRYPTO_SHR	Alias for OSSL$LIBCRYPTOnnn_SHR
-$	!	OSSL$LIBSSL_SHR		Alias for OSSL$LIBSSLnnn_SHR
+$	!	OSSL$libgmcrypto_SHR	Alias for OSSL$libgmcryptonnn_SHR
+$	!	OSSL$libgmssl_SHR		Alias for OSSL$libgmsslnnn_SHR
 $	!
 $	! P1	Qualifier(s) for DEFINE.  "/SYSTEM" would be typical when
 $	!	calling this script from SYS$STARTUP:SYSTARTUP_VMS.COM,
@@ -99,11 +99,11 @@ $	DEF  OSSL$SHARE			OSSL$INSTROOT:[LIB.'arch']
 $	DEF  OSSL$ENGINES'sv''pz'	OSSL$INSTROOT:[ENGINES'sv''pz'.'arch']
 $	DEF  OSSL$EXE			OSSL$INSTROOT:[EXE.'arch'],-
 					OSSL$INSTROOT:[EXE]
-$	DEF  OSSL$LIBCRYPTO'pz'		OSSL$LIB:OSSL$LIBCRYPTO'pz'.OLB
-$	DEF  OSSL$LIBSSL'pz'		OSSL$LIB:OSSL$LIBSSL'pz'.OLB
+$	DEF  OSSL$libgmcrypto'pz'		OSSL$LIB:OSSL$libgmcrypto'pz'.OLB
+$	DEF  OSSL$libgmssl'pz'		OSSL$LIB:OSSL$libgmssl'pz'.OLB
 ${- output_off() if $config{no_shared}; "" -}
-$	DEF  OSSL$LIBCRYPTO'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBCRYPTO'sv'_SHR'pz'.EXE
-$	DEF  OSSL$LIBSSL'sv'_SHR'pz'	OSSL$SHARE:OSSL$LIBSSL'sv'_SHR'pz'.EXE
+$	DEF  OSSL$libgmcrypto'sv'_SHR'pz'	OSSL$SHARE:OSSL$libgmcrypto'sv'_SHR'pz'.EXE
+$	DEF  OSSL$libgmssl'sv'_SHR'pz'	OSSL$SHARE:OSSL$libgmssl'sv'_SHR'pz'.EXE
 ${- output_on() if $config{no_shared}; "" -}
 $	DEF  OPENSSL			OSSL$INCLUDE:[OPENSSL]
 $
@@ -111,8 +111,8 @@ $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEF OSSL$ENGINES'pz'	OSSL$ENGINES'sv''pz'
 ${- output_off() if $config{no_shared}; "" -}
-$	    DEF OSSL$LIBCRYPTO_SHR'pz'	OSSL$LIBCRYPTO'sv'_SHR'pz'
-$	    DEF OSSL$LIBSSL_SHR'pz'	OSSL$LIBSSL'sv'_SHR'pz'
+$	    DEF OSSL$libgmcrypto_SHR'pz'	OSSL$libgmcrypto'sv'_SHR'pz'
+$	    DEF OSSL$libgmssl_SHR'pz'	OSSL$libgmssl'sv'_SHR'pz'
 ${- output_on() if $config{no_shared}; "" -}
 $	ENDIF
 $

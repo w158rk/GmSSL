@@ -435,7 +435,7 @@ void X509_STORE_CTX_set0_param(X509_STORE_CTX *ctx, X509_VERIFY_PARAM *param);
 int X509_STORE_CTX_set_default(X509_STORE_CTX *ctx, const char *name);
 
 /*
- * Bridge opacity barrier between libcrypt and libssl, also needed to support
+ * Bridge opacity barrier between libcrypt and libgmssl, also needed to support
  * offline testing in test/danetest.c
  */
 void X509_STORE_CTX_set0_dane(X509_STORE_CTX *ctx, SSL_DANE *dane);

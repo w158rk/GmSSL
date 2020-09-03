@@ -36,11 +36,11 @@ $	DEAS OSSL$LIB
 $	DEAS OSSL$SHARE
 $	DEAS OSSL$ENGINES'sv'
 $	DEAS OSSL$EXE
-$	DEAS OSSL$LIBCRYPTO'pz'
-$	DEAS OSSL$LIBSSL'pz'
+$	DEAS OSSL$libgmcrypto'pz'
+$	DEAS OSSL$libgmssl'pz'
 ${- output_off() if $config{no_shared}; "" -}
-$	DEAS OSSL$LIBCRYPTO'sv'_SHR'pz'
-$	DEAS OSSL$LIBSSL'sv'_SHR'pz'
+$	DEAS OSSL$libgmcrypto'sv'_SHR'pz'
+$	DEAS OSSL$libgmssl'sv'_SHR'pz'
 ${- output_on() if $config{no_shared}; "" -}
 $	DEAS OPENSSL
 $
@@ -48,8 +48,8 @@ $	IF P2 .NES. "NOALIASES"
 $	THEN
 $	    DEAS OSSL$ENGINES
 ${- output_off() if $config{no_shared}; "" -}
-$	    DEAS OSSL$LIBCRYPTO_SHR'pz'
-$	    DEAS OSSL$LIBSSL_SHR'pz'
+$	    DEAS OSSL$libgmcrypto_SHR'pz'
+$	    DEAS OSSL$libgmssl_SHR'pz'
 ${- output_on() if $config{no_shared}; "" -}
 $	ENDIF
 $

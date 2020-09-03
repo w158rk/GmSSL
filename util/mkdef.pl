@@ -12,7 +12,7 @@
 # It does this by parsing the header files and looking for the
 # prototyped functions: it then prunes the output.
 #
-# Intermediary files are created, call libcrypto.num and libssl.num,
+# Intermediary files are created, call libgmcrypto.num and libgmssl.num,
 # The format of these files is:
 #
 #	routine-name	nnnn	vers	info
@@ -51,8 +51,8 @@ use File::Spec::Functions;
 
 my $debug=0;
 
-my $crypto_num= catfile($config{sourcedir},"util","libcrypto.num");
-my $ssl_num=    catfile($config{sourcedir},"util","libssl.num");
+my $crypto_num= catfile($config{sourcedir},"util","libgmcrypto.num");
+my $ssl_num=    catfile($config{sourcedir},"util","libgmssl.num");
 my $libname;
 
 my $do_update = 0;
@@ -174,12 +174,12 @@ foreach (@ARGV, split(/ /, $config{options}))
 		$zlib = 1;
 	}
 
-	$do_ssl=1 if $_ eq "libssl";
+	$do_ssl=1 if $_ eq "libgmssl";
 	if ($_ eq "ssl") {
 		$do_ssl=1; 
 		$libname=$_
 	}
-	$do_crypto=1 if $_ eq "libcrypto";
+	$do_crypto=1 if $_ eq "libgmcrypto";
 	if ($_ eq "crypto") {
 		$do_crypto=1;
 		$libname=$_;
@@ -217,10 +217,10 @@ foreach (@ARGV, split(/ /, $config{options}))
 
 if (!$libname) { 
 	if ($do_ssl) {
-		$libname="LIBSSL";
+		$libname="libgmssl";
 	}
 	if ($do_crypto) {
-		$libname="LIBCRYPTO";
+		$libname="libgmcrypto";
 	}
 }
 
@@ -247,7 +247,7 @@ $ssl.=" include/openssl/tls1.h";
 $ssl.=" include/openssl/srtp.h";
 
 # We use headers found in include/openssl and include/internal only.
-# The latter is needed so libssl.so/.dll/.exe can link properly.
+# The latter is needed so libgmssl.so/.dll/.exe can link properly.
 my $crypto ="include/openssl/crypto.h";
 $crypto.=" include/internal/o_dir.h";
 $crypto.=" include/internal/o_str.h";
@@ -333,34 +333,34 @@ $crypto.=" include/openssl/zuc.h";
 
 my $symhacks="include/openssl/symhacks.h";
 
-my @ssl_symbols = &do_defs("LIBSSL", $ssl, $symhacks);
-my @crypto_symbols = &do_defs("LIBCRYPTO", $crypto, $symhacks);
+my @ssl_symbols = &do_defs("libgmssl", $ssl, $symhacks);
+my @crypto_symbols = &do_defs("libgmcrypto", $crypto, $symhacks);
 
 if ($do_update) {
 
 if ($do_ssl == 1) {
 
-	&maybe_add_info("LIBSSL",*ssl_list,@ssl_symbols);
+	&maybe_add_info("libgmssl",*ssl_list,@ssl_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$ssl_num");
-		&rewrite_numbers(*OUT,"LIBSSL",*ssl_list,@ssl_symbols);
+		&rewrite_numbers(*OUT,"libgmssl",*ssl_list,@ssl_symbols);
 	} else {
 		open(OUT, ">>$ssl_num");
 	}
-	&update_numbers(*OUT,"LIBSSL",*ssl_list,$max_ssl,@ssl_symbols);
+	&update_numbers(*OUT,"libgmssl",*ssl_list,$max_ssl,@ssl_symbols);
 	close OUT;
 }
 
 if($do_crypto == 1) {
 
-	&maybe_add_info("LIBCRYPTO",*crypto_list,@crypto_symbols);
+	&maybe_add_info("libgmcrypto",*crypto_list,@crypto_symbols);
 	if ($do_rewrite == 1) {
 		open(OUT, ">$crypto_num");
-		&rewrite_numbers(*OUT,"LIBCRYPTO",*crypto_list,@crypto_symbols);
+		&rewrite_numbers(*OUT,"libgmcrypto",*crypto_list,@crypto_symbols);
 	} else {
 		open(OUT, ">>$crypto_num");
 	}
-	&update_numbers(*OUT,"LIBCRYPTO",*crypto_list,$max_crypto,@crypto_symbols);
+	&update_numbers(*OUT,"libgmcrypto",*crypto_list,$max_crypto,@crypto_symbols);
 	close OUT;
 } 
 
@@ -380,10 +380,10 @@ if($do_crypto == 1) {
 int main()
 {
 EOF
-	&print_test_file(*STDOUT,"LIBSSL",*ssl_list,$do_ctestall,@ssl_symbols)
+	&print_test_file(*STDOUT,"libgmssl",*ssl_list,$do_ctestall,@ssl_symbols)
 		if $do_ssl == 1;
 
-	&print_test_file(*STDOUT,"LIBCRYPTO",*crypto_list,$do_ctestall,@crypto_symbols)
+	&print_test_file(*STDOUT,"libgmcrypto",*crypto_list,$do_ctestall,@crypto_symbols)
 		if $do_crypto == 1;
 
 	print "}\n";

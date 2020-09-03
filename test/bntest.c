@@ -37,11 +37,11 @@
  * In bn_lcl.h, bn_expand() is defined as a static ossl_inline function.
  * This is fine in itself, it will end up as an unused static function in
  * the worst case.  However, it referenses bn_expand2(), which is a private
- * function in libcrypto and therefore unavailable on some systems.  This
+ * function in libgmcrypto and therefore unavailable on some systems.  This
  * may result in a linker error because of unresolved symbols.
  *
  * To avoid this, we define a dummy variant of bn_expand2() here, and to
- * avoid possible clashes with libcrypto, we rename it first, using a macro.
+ * avoid possible clashes with libgmcrypto, we rename it first, using a macro.
  */
 #define bn_expand2 dummy_bn_expand2
 BIGNUM *bn_expand2(BIGNUM *b, int words);

@@ -55,11 +55,11 @@ extern "C" {
  * be greater or equal to what it was at application link time.  With this
  * scheme, the version number is usually part of the file name, like this:
  *
- *      libcrypto.so.0.9
+ *      libgmcrypto.so.0.9
  *
  * Some unixen also make a softlink with the major version number only:
  *
- *      libcrypto.so.0
+ *      libgmcrypto.so.0
  *
  * On Tru64 and IRIX 6.x it works a little bit differently.  There, the
  * shared library version is stored in the file, and is actually a series

@@ -13,8 +13,8 @@ setup("test_ordinals");
 
 plan tests => 2;
 
-ok(testordinals(srctop_file("util", "libcrypto.num")), "Test libcrypto.num");
-ok(testordinals(srctop_file("util", "libssl.num")), "Test libssl.num");
+ok(testordinals(srctop_file("util", "libgmcrypto.num")), "Test libgmcrypto.num");
+ok(testordinals(srctop_file("util", "libgmssl.num")), "Test libgmssl.num");
 
 sub testordinals
 {

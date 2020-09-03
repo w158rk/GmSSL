@@ -18,7 +18,7 @@
 
 # include <openssl/des.h>
 
-# ifdef OPENSSL_BUILD_SHLIBCRYPTO
+# ifdef OPENSSL_BUILD_SHlibgmcrypto
 #  undef OPENSSL_EXTERN
 #  define OPENSSL_EXTERN OPENSSL_EXPORT
 # endif
