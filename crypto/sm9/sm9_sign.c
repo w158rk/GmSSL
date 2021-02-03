@@ -119,8 +119,8 @@ SM9Signature *SM9_SignFinal(EVP_MD_CTX *ctx1, SM9PrivateKey *sk)
 
 
 	/* get Ppubs */
-	if (ASN1_STRING_length(sk->pointPpub) != 129
-		|| !point_from_octets(&Ppubs, ASN1_STRING_get0_data(sk->pointPpub), p, bn_ctx)) {
+	if (ASN1_STRING_length(sk->pointPpub2) != 129
+		|| !point_from_octets(&Ppubs, ASN1_STRING_get0_data(sk->pointPpub2), p, bn_ctx)) {
 		SM9err(SM9_F_SM9_SIGNFINAL, SM9_R_INVALID_POINTPPUB);
 		goto end;
 	}
@@ -171,8 +171,8 @@ SM9Signature *SM9_SignFinal(EVP_MD_CTX *ctx1, SM9PrivateKey *sk)
 	} while (BN_is_zero(r));
 
 	/* get sk */
-	if (!EC_POINT_oct2point(group, S, ASN1_STRING_get0_data(sk->privatePoint),
-		ASN1_STRING_length(sk->privatePoint), bn_ctx)) {
+	if (!EC_POINT_oct2point(group, S, ASN1_STRING_get0_data(sk->privatePoint1),
+		ASN1_STRING_length(sk->privatePoint1), bn_ctx)) {
 		SM9err(SM9_F_SM9_SIGNFINAL, SM9_R_INVALID_PRIVATE_POINT);
 		goto end;
 	}
@@ -277,8 +277,8 @@ int SM9_VerifyFinal(EVP_MD_CTX *ctx1, const SM9Signature *sig, SM9PublicKey *pk)
 	}
 
 	/* g = e(P1, Ppubs) */
-	if (ASN1_STRING_length(pk->pointPpub) != 129
-		|| !point_from_octets(&Ppubs, ASN1_STRING_get0_data(pk->pointPpub), p, bn_ctx)) {
+	if (ASN1_STRING_length(pk->pointPpub2) != 129
+		|| !point_from_octets(&Ppubs, ASN1_STRING_get0_data(pk->pointPpub2), p, bn_ctx)) {
 		SM9err(SM9_F_SM9_VERIFYFINAL, SM9_R_INVALID_POINTPPUB);
 		goto end;
 	}

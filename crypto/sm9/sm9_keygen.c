@@ -186,11 +186,13 @@ SM9_KEY *SM9_MASTER_KEY_extract_key(SM9_MASTER_KEY *master,
 	if (!(sk->pairing = master->pairing)
 		|| !(sk->scheme = master->scheme)
 		|| !(sk->hash1 = master->hash1)
-		|| !(sk->pointPpub = ASN1_OCTET_STRING_dup(master->pointPpub))
+		|| !(sk->pointPpub1 = ASN1_OCTET_STRING_dup(master->pointPpub1))
+		|| !(sk->pointPpub2 = ASN1_OCTET_STRING_dup(master->pointPpub2))
 		|| !(sk->identity = ASN1_OCTET_STRING_new())
 		|| !ASN1_OCTET_STRING_set(sk->identity, (unsigned char *)id, idlen)
 		|| !(sk->publicPoint = ASN1_OCTET_STRING_new())
-		|| !(sk->privatePoint = ASN1_OCTET_STRING_new())) {
+		|| !(sk->privatePoint1 = ASN1_OCTET_STRING_new())
+		|| !(sk->privatePoint2 = ASN1_OCTET_STRING_new())) {
 		SM9err(SM9_F_SM9_MASTER_KEY_EXTRACT_KEY, ERR_R_ASN1_LIB);
 		goto end;
 	}
@@ -201,16 +203,15 @@ SM9_KEY *SM9_MASTER_KEY_extract_key(SM9_MASTER_KEY *master,
 		goto end;
 	}
 
-	/* generate (Ppubs, ds) or (Ppube, de) */
-	if (scheme == NID_sm9sign) {
+	{
 
 		/* publicPoint = h1 * P2 + Ppubs */
 		point_t Ppubs;
 		point_t point;
 		if (!point_init(&point, ctx)
 			|| !point_init(&Ppubs, ctx)
-			|| ASN1_STRING_length(master->pointPpub) != sizeof(buf)
-			|| !point_from_octets(&Ppubs, ASN1_STRING_get0_data(master->pointPpub), p, ctx)
+			|| ASN1_STRING_length(master->pointPpub2) != sizeof(buf)
+			|| !point_from_octets(&Ppubs, ASN1_STRING_get0_data(master->pointPpub2), p, ctx)
 			|| !point_mul_generator(&point, t, p, ctx)
 			|| !point_add(&point, &point, &Ppubs, p, ctx)
 			|| !point_to_octets(&point, buf, ctx)
@@ -223,7 +224,9 @@ SM9_KEY *SM9_MASTER_KEY_extract_key(SM9_MASTER_KEY *master,
 		point_cleanup(&Ppubs);
 		point_cleanup(&point);
 
-	} else {
+	}
+	
+	{
 
 		/* publicPoint = h1 * P1 + Ppube */
 		EC_POINT *Ppube = NULL;
@@ -232,8 +235,8 @@ SM9_KEY *SM9_MASTER_KEY_extract_key(SM9_MASTER_KEY *master,
 			|| !(point = EC_POINT_new(group))
 			|| !(Ppube = EC_POINT_new(group))
 			|| !EC_POINT_oct2point(group, Ppube,
-				ASN1_STRING_get0_data(master->pointPpub),
-				ASN1_STRING_length(master->pointPpub), ctx)
+				ASN1_STRING_get0_data(master->pointPpub1),
+				ASN1_STRING_length(master->pointPpub1), ctx)
 			|| !EC_POINT_mul(group, point, t, NULL, NULL, ctx)
 			|| !EC_POINT_add(group, point, point, Ppube, ctx)
 			|| !(len = EC_POINT_point2oct(group, point, point_form, buf, len, ctx))
@@ -271,25 +274,26 @@ SM9_KEY *SM9_MASTER_KEY_extract_key(SM9_MASTER_KEY *master,
 			goto end;
 		}
 
-		if (scheme == NID_sm9sign) {
+		{
 			/* ds = t2 * P1 */
 			EC_POINT *ds = NULL;
 			if (!(ds = EC_POINT_new(group))
 				|| !EC_POINT_mul(group, ds, t, NULL, NULL, ctx)
 				|| !(len = EC_POINT_point2oct(group, ds, point_form, buf, len, ctx))
-				|| !ASN1_OCTET_STRING_set(sk->privatePoint, buf, len)) {
+				|| !ASN1_OCTET_STRING_set(sk->privatePoint1, buf, len)) {
 				SM9err(SM9_F_SM9_MASTER_KEY_EXTRACT_KEY, ERR_R_SM9_LIB);
 				EC_POINT_free(ds);
 				goto end;
 			}
 			EC_POINT_free(ds);
-		} else {
+		}
+		{
 			/* de = t2 * P2 */
 			point_t de;
 			if (!point_init(&de, ctx)
 				|| !point_mul_generator(&de, t, p, ctx)
 				|| !point_to_octets(&de, buf, ctx)
-				|| !ASN1_OCTET_STRING_set(sk->privatePoint, buf, sizeof(buf))) {
+				|| !ASN1_OCTET_STRING_set(sk->privatePoint2, buf, sizeof(buf))) {
 				SM9err(SM9_F_SM9_MASTER_KEY_EXTRACT_KEY, ERR_R_SM9_LIB);
 				point_cleanup(&de);
 				goto end;
@@ -344,7 +348,8 @@ SM9PublicKey *SM9PrivateKey_get_public_key(SM9PrivateKey *sk)
 	if (!(pk->pairing = OBJ_dup(sk->pairing))
 		|| !(pk->scheme = OBJ_dup(sk->scheme))
 		|| !(pk->hash1 = OBJ_dup(sk->hash1))
-		|| !ASN1_STRING_copy(pk->pointPpub, sk->pointPpub)
+		|| !ASN1_STRING_copy(pk->pointPpub1, sk->pointPpub1)
+		|| !ASN1_STRING_copy(pk->pointPpub2, sk->pointPpub2)
 		|| !ASN1_STRING_copy(pk->publicPoint, sk->publicPoint)
 		|| !ASN1_STRING_copy(pk->identity, sk->identity)) {
 		goto end;

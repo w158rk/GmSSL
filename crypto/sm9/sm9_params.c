@@ -99,6 +99,7 @@ static const BN_ULONG _sm9bn256v1_y2[][BN_SM9_BN256_TOP] = {
 	 0x66BA0D262CBEE6EDULL, 0x17509B092E845C12ULL}
 };
 
+// (q^12-1)/n
 static const BN_ULONG _sm9bn256v1_final_expo[BN_SM9_FINAL_EXPO_TOP] = {
 	0x2FACDD0F0D042330ULL, 0xB19FE1764AC0B748ULL,
 	0xC6135FEC864E1676ULL, 0x8E4890AB7E824DC7ULL,
@@ -143,6 +144,9 @@ static const BN_ULONG _sm9bn256v1_fast_final_expo_p3[BN_SM9_FAST_FINAL_EXPO_P3_T
 	0xDC53E586930846F1ULL, 0xD62CD8FB7B497A0AULL,
 	0xF12FCAD3B31FE2B0ULL, 0x5C5E452404034E2AULL,
 };
+
+
+
 
 #elif BN_BITS2 == 32
 static const BN_ULONG _sm9bn256v1_prime[BN_SM9_BN256_TOP] = {
@@ -407,4 +411,303 @@ const BIGNUM *SM9_get0_fast_final_exponent_p23(void)
 const BIGNUM *SM9_get0_fast_final_exponent_p3(void)
 {
 	return &_bignum_sm9bn256v1_fast_final_expo_p3;
+}
+
+
+
+static const BN_ULONG _sm9bn256v1_inv_unit[] = 
+{
+	0xF2B7CD93F1A8A2BEULL, 0x90F949A58D3D776DULL,
+	0xEB01D5A7FAC763A2ULL, 0x5B2000000151D378ULL
+};
+
+static const BN_ULONG _sm9bn256v1_inv_unit_montgomery[] = 
+{
+	0xE56F9B27E351457DULL, 0x21F2934B1A7AEEDBULL,
+	0xD603AB4FF58EC745ULL, 0x3640000002A3A6F1ULL
+};
+
+static const BN_ULONG _sm9bn256v1_one_montgomery[] = 
+{
+	0x1A9064D81CAEBA83ULL, 0xDE0D6CB4E5851124ULL,
+	0x29FC54B00A7138BAULL, 0x49BFFFFFFD5C590EULL
+};
+
+static const BN_ULONG _sm9bn256v1_inv_neg_2_montgomery[] = 
+{
+	0xE56F9B27E351457DULL, 0x21F2934B1A7AEEDBULL,
+	0xD603AB4FF58EC745ULL, 0x3640000002A3A6F1ULL
+};
+
+
+static const BN_ULONG _sm9bn256v1_t[] = 
+{
+	0x600000000058F98AULL
+};
+
+static const BN_ULONG _sm9bn256v1_6t1[] = 
+{
+	0x0000B98B0CB27659ULL, 0xD8000000019062EDULL
+};
+
+static const BN_ULONG _sm9bn256v1_6t5[] = 
+{
+	0x400000000215D941ULL, 0x2ULL
+};
+
+
+static const BN_ULONG _sm9bn256v1_fast_final_expo_p[][BN_SM9_FAST_FINAL_EXPO_P2_TOP] = {
+	{},
+	{0xA91D8354377B698BULL, 0x47C5C86E0DDD04EDULL,
+	 0x843C6CFA9C086749ULL, 0x3F23EA58E5720BDBULL},
+	{0xD5FC11967BE65334ULL, 0x780272354F8B78F4ULL,
+	 0xF300000002A3A6F2ULL},
+	{0xF5B21FD3DA24D011ULL, 0x9F9D411806DC5177ULL,
+	 0xF55ACC93EE0BAF15ULL, 0x6C648DE5DC0A3F2CULL},
+	{0xD5FC11967BE65333ULL, 0x780272354F8B78F4ULL,
+	 0xF300000002A3A6F2ULL},
+	{0x4C949C7FA2A96686ULL, 0x57D778A9F8FF4C8AULL,
+	 0x711E5F99520347CCULL, 0x2D40A38CF6983351ULL},
+	{},
+	{0x3C5217D3ABD5DBF2ULL, 0xDA2CCADD0C9DE9EEULL,
+	 0x51C73E5559865FFBULL, 0x771C15A71D319B16ULL},
+	{0x0F738991676AF249ULL, 0xA9F02115CAEF75E7ULL,
+	 0xE303AB4FF2EB2052ULL, 0xB640000002A3A6F0ULL},
+	{0xEFBD7B54092C756CULL, 0x82555233139E9D63ULL,
+	 0xE0A8DEBC0783182FULL, 0x49DB721A269967C4ULL},
+	{0x0F738991676AF24AULL, 0xA9F02115CAEF75E7ULL,
+	 0xE303AB4FF2EB2052ULL, 0xB640000002A3A6F0ULL},
+	{0x98DAFEA840A7DEF7ULL, 0xCA1B1AA1217BA251ULL,
+	 0x64E54BB6A38B7F78ULL, 0x88FF5C730C0B73A0ULL}
+};
+
+#define BN_SM9_T_TOP (64+BN_BITS2-1)/BN_BITS2
+#define BN_SM9_6T1_TOP (128+BN_BITS2-1)/BN_BITS2
+#define BN_SM9_6T5_TOP (66+BN_BITS2-1)/BN_BITS2
+#define BN_SM9_FAST_FINAL_EXPO_P3_TOP BN_SM9_FAST_FINAL_EXPO_P2_TOP
+
+static const BIGNUM _bignum_sm9bn256v1_inv_unit = {
+	(BN_ULONG *) _sm9bn256v1_inv_unit,
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_inv_unit_montgomery = {
+	(BN_ULONG *) _sm9bn256v1_inv_unit_montgomery,
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_one_montgomery = {
+	(BN_ULONG *) _sm9bn256v1_one_montgomery,
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_inv_neg_2_montgomery = {
+	(BN_ULONG *) _sm9bn256v1_inv_neg_2_montgomery,
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_t = {
+	(BN_ULONG *) _sm9bn256v1_t,
+	BN_SM9_T_TOP,
+	BN_SM9_T_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto1 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[1],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto2 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[2],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto3 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[3],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto4 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[4],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto5 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[5],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto7 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[7],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto8 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[8],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto9 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[9],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto10 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[10],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_fast_final_expo_pto11 = {
+	(BN_ULONG *) _sm9bn256v1_fast_final_expo_p[11],
+	BN_SM9_BN256_TOP,
+	BN_SM9_BN256_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+
+static const BIGNUM _bignum_sm9bn256v1_6t1 = {
+	(BN_ULONG *) _sm9bn256v1_6t1,
+	BN_SM9_6T1_TOP,
+	BN_SM9_6T1_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+static const BIGNUM _bignum_sm9bn256v1_6t5 = {
+	(BN_ULONG *) _sm9bn256v1_6t5,
+	BN_SM9_6T5_TOP,
+	BN_SM9_6T5_TOP,
+	0,
+	BN_FLG_STATIC_DATA
+};
+
+
+const BIGNUM *SM9_get0_inv_unit(void)
+{
+	return &_bignum_sm9bn256v1_inv_unit;
+}
+
+const BIGNUM *SM9_get0_inv_unit_montgomery(void)
+{
+	return &_bignum_sm9bn256v1_inv_unit_montgomery;
+}
+
+const BIGNUM *SM9_get0_one_montgomery(void)
+{
+	return &_bignum_sm9bn256v1_one_montgomery;
+}
+
+const BIGNUM *SM9_get0_inv_neg_2_montgomery(void)
+{
+	return &_bignum_sm9bn256v1_inv_neg_2_montgomery;
+}
+
+const BIGNUM *SM9_get0_t(void)
+{
+	return &_bignum_sm9bn256v1_t;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto1(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto1;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto2(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto2;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto3(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto3;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto4(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto4;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto5(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto5;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto7(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto7;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto8(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto8;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto9(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto9;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto10(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto10;
+}
+
+const BIGNUM *SM9_get0_fast_final_expo_pto11(void)
+{
+	return &_bignum_sm9bn256v1_fast_final_expo_pto11;
+}
+
+const BIGNUM *SM9_get0_6t5(void)
+{
+	return &_bignum_sm9bn256v1_6t5;
+}
+
+const BIGNUM *SM9_get0_6t1(void)
+{
+	return &_bignum_sm9bn256v1_6t1;
 }

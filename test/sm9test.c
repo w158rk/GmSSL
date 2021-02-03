@@ -206,8 +206,8 @@ static int sm9test_sign(const char *id, const unsigned char *msg, size_t msglen,
 			goto end;
 		}
 
-		if (!hexequbin(Ppubs, ASN1_STRING_get0_data(msk->pointPpub),
-			ASN1_STRING_length(msk->pointPpub))) {
+		if (!hexequbin(Ppubs, ASN1_STRING_get0_data(msk->pointPpub2),
+			ASN1_STRING_length(msk->pointPpub2))) {
 			fprintf(stderr, "%s %d: publicPoint failed\n", __FILE__, __LINE__);
 			goto end;
 		}
@@ -221,8 +221,8 @@ static int sm9test_sign(const char *id, const unsigned char *msg, size_t msglen,
 
 	if (use_test_vector) {
 		/* check sk->privatePoint == dsA */
-		if (!hexequbin(dsA, ASN1_STRING_get0_data(sk->privatePoint),
-			ASN1_STRING_length(sk->privatePoint))) {
+		if (!hexequbin(dsA, ASN1_STRING_get0_data(sk->privatePoint1),
+			ASN1_STRING_length(sk->privatePoint1))) {
 			fprintf(stderr, "%s %d: dsA for '%s' failed\n", __FILE__, __LINE__, id);
 			goto end;
 		}

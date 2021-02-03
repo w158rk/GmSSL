@@ -157,11 +157,18 @@ static int do_sm9_master_key_print(BIO *bp, const SM9_MASTER_KEY *x, int off, in
 		return 0;
 
 	/* pointPpub */
-	if (BIO_printf(bp, "%*spointPpub:\n", off, "") <= 0)
+	if (BIO_printf(bp, "%*spointPpub1:\n", off, "") <= 0)
 		return 0;
-	if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->pointPpub),
-		ASN1_STRING_length(x->pointPpub), off + 4) == 0)
+	if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->pointPpub1),
+		ASN1_STRING_length(x->pointPpub1), off + 4) == 0)
 		return 0;
+
+	if (BIO_printf(bp, "%*spointPpub2:\n", off, "") <= 0)
+		return 0;
+	if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->pointPpub2),
+		ASN1_STRING_length(x->pointPpub2), off + 4) == 0)
+		return 0;
+
 
 	/* masterSecret */
 	if (priv) {
@@ -346,7 +353,8 @@ static int sm9_pub_cmp(const EVP_PKEY *a, const EVP_PKEY *b)
 		|| OBJ_cmp(ax->scheme, bx->scheme)
 		|| OBJ_cmp(ax->hash1, bx->hash1)
 		/* FIXME: decode point then compare to support point compression */
-		|| ASN1_OCTET_STRING_cmp(ax->pointPpub, bx->pointPpub)
+		|| ASN1_OCTET_STRING_cmp(ax->pointPpub1, bx->pointPpub1)
+		|| ASN1_OCTET_STRING_cmp(ax->pointPpub2, bx->pointPpub2)
 		|| ASN1_OCTET_STRING_cmp(ax->identity, bx->identity)
 		|| ASN1_OCTET_STRING_cmp(ax->publicPoint, bx->publicPoint)) {
 		return 0;
@@ -399,10 +407,16 @@ static int do_sm9_key_print(BIO *bp, const SM9PrivateKey *x, int off, int priv)
 		return 0;
 
 	/* pointPpub */
-	if (BIO_printf(bp, "%*spointPpub:\n", off, "") <= 0)
+	if (BIO_printf(bp, "%*spointPpub1:\n", off, "") <= 0)
 		return 0;
-	if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->pointPpub),
-		ASN1_STRING_length(x->pointPpub), off + 4) == 0)
+	if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->pointPpub1),
+		ASN1_STRING_length(x->pointPpub1), off + 4) == 0)
+		return 0;
+
+	if (BIO_printf(bp, "%*spointPpub2:\n", off, "") <= 0)
+		return 0;
+	if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->pointPpub2),
+		ASN1_STRING_length(x->pointPpub2), off + 4) == 0)
 		return 0;
 
 	/* identity */
@@ -421,11 +435,18 @@ static int do_sm9_key_print(BIO *bp, const SM9PrivateKey *x, int off, int priv)
 
 	/* privatePoint */
 	if (priv) {
-		if (BIO_printf(bp, "%*sprivatePoint:\n", off, "") <= 0)
+		if (BIO_printf(bp, "%*sprivatePoint1:\n", off, "") <= 0)
 			return 0;
-		if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->privatePoint),
-			ASN1_STRING_length(x->privatePoint), off + 4) == 0)
+		if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->privatePoint1),
+			ASN1_STRING_length(x->privatePoint1), off + 4) == 0)
 			return 0;
+
+		if (BIO_printf(bp, "%*sprivatePoint2:\n", off, "") <= 0)
+			return 0;
+		if (ASN1_buf_print(bp, ASN1_STRING_get0_data(x->privatePoint2),
+			ASN1_STRING_length(x->privatePoint2), off + 4) == 0)
+			return 0;
+
 	}
 
 	return 1;
@@ -544,6 +565,6 @@ int SM9_MASTER_KEY_print(BIO *bp, const SM9_MASTER_KEY *x, int off)
 
 int SM9_KEY_print(BIO *bp, const SM9_KEY *x, int off)
 {
-	int priv = (x->privatePoint != NULL);
+	int priv = (x->privatePoint1 != NULL || x->privatePoint2 != NULL);
 	return do_sm9_key_print(bp, x, off, priv);
 }

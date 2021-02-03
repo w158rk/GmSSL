@@ -110,7 +110,7 @@ int SM9_unwrap_key(int type,
 	}
 
 	/* parse de on E'(E_p^2) */
-	if (!point_from_octets(&de, ASN1_STRING_get0_data(sk->privatePoint), p, bn_ctx)) {
+	if (!point_from_octets(&de, ASN1_STRING_get0_data(sk->privatePoint2), p, bn_ctx)) {
 		SM9err(SM9_F_SM9_UNWRAP_KEY, ERR_R_MALLOC_FAILURE);
 		goto end;
 	}
@@ -216,8 +216,8 @@ int SM9_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 	}
 
 	/* parse Ppube */
-	if (!EC_POINT_oct2point(group, Ppube, ASN1_STRING_get0_data(mpk->pointPpub),
-		ASN1_STRING_length(mpk->pointPpub), bn_ctx)) {
+	if (!EC_POINT_oct2point(group, Ppube, ASN1_STRING_get0_data(mpk->pointPpub1),
+		ASN1_STRING_length(mpk->pointPpub1), bn_ctx)) {
 		SM9err(SM9_F_SM9_WRAP_KEY, SM9_R_INVALID_POINTPPUB);
 		goto end;
 	}
@@ -249,6 +249,8 @@ int SM9_wrap_key(int type, /* NID_sm9kdf_with_sm3 */
 		SM9err(SM9_F_SM9_WRAP_KEY, ERR_R_EC_LIB);
 		goto end;
 	}
+
+	// printf("hash of (%s): %s\n", id, BN_bn2hex(h));
 
 	do {
 		unsigned char *out = key;

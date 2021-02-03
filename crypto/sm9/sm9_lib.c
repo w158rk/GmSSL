@@ -104,7 +104,8 @@ void SM9_MASTER_KEY_free(SM9_MASTER_KEY *key)
 		ASN1_OBJECT_free(key->pairing);
 		ASN1_OBJECT_free(key->scheme);
 		ASN1_OBJECT_free(key->hash1);
-		ASN1_OCTET_STRING_free(key->pointPpub);
+		ASN1_OCTET_STRING_free(key->pointPpub1);
+		ASN1_OCTET_STRING_free(key->pointPpub2);
 		BN_clear_free(key->masterSecret);
 	}
 	OPENSSL_clear_free(key, sizeof(*key));
@@ -128,7 +129,8 @@ void SM9_KEY_free(SM9_KEY *key)
 		ASN1_OBJECT_free(key->pairing);
 		ASN1_OBJECT_free(key->scheme);
 		ASN1_OBJECT_free(key->hash1);
-		ASN1_OCTET_STRING_free(key->pointPpub);
+		ASN1_OCTET_STRING_free(key->pointPpub1);
+		ASN1_OCTET_STRING_free(key->pointPpub2);
 		ASN1_OCTET_STRING_free(key->identity);
 		ASN1_OCTET_STRING_free(key->publicPoint);
 	}

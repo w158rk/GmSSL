@@ -126,7 +126,7 @@ SM9MasterSecret *SM9_generate_master_secret(int pairing, int scheme, int hash1)
 	} while (BN_is_zero(msk->masterSecret));
 
 	/* generate master public point */
-	if (scheme == NID_sm9sign) {
+	{
 
 		/* Ppubs = k * P2 in E'(F_p^2) */
 		point_t Ppubs;
@@ -142,8 +142,18 @@ SM9MasterSecret *SM9_generate_master_secret(int pairing, int scheme, int hash1)
 		len = 129;
 		point_cleanup(&Ppubs);
 
-	} else if (scheme == NID_sm9keyagreement
-		|| scheme == NID_sm9encrypt) {
+	} 
+
+	if (!(msk->pointPpub2 = ASN1_OCTET_STRING_new())) {
+		SM9err(SM9_F_SM9_GENERATE_MASTER_SECRET, ERR_R_MALLOC_FAILURE);
+		goto end;
+	}
+	if (!ASN1_OCTET_STRING_set(msk->pointPpub2, buf, (int)len)) {
+		ERR_print_errors_fp(stderr);
+		goto end;
+	}
+
+	{
 
 		/* Ppube = k * P1 in E(F_p) */
 		EC_GROUP *group = NULL;
@@ -162,16 +172,13 @@ SM9MasterSecret *SM9_generate_master_secret(int pairing, int scheme, int hash1)
 		EC_GROUP_free(group);
 		EC_POINT_free(Ppube);
 
-	} else {
-		SM9err(SM9_F_SM9_GENERATE_MASTER_SECRET, SM9_R_INVALID_SCHEME);
-		goto end;
-	}
+	} 
 
-	if (!(msk->pointPpub = ASN1_OCTET_STRING_new())) {
+	if (!(msk->pointPpub1 = ASN1_OCTET_STRING_new())) {
 		SM9err(SM9_F_SM9_GENERATE_MASTER_SECRET, ERR_R_MALLOC_FAILURE);
 		goto end;
 	}
-	if (!ASN1_OCTET_STRING_set(msk->pointPpub, buf, (int)len)) {
+	if (!ASN1_OCTET_STRING_set(msk->pointPpub1, buf, (int)len)) {
 		ERR_print_errors_fp(stderr);
 		goto end;
 	}
@@ -202,7 +209,8 @@ SM9PublicParameters *SM9_extract_public_parameters(SM9MasterSecret *msk)
 	if (!(mpk->pairing = OBJ_dup(msk->pairing))
 		|| !(mpk->scheme = OBJ_dup(msk->scheme))
 		|| !(mpk->hash1 = OBJ_dup(msk->hash1))
-		|| !(mpk->pointPpub = ASN1_OCTET_STRING_dup(msk->pointPpub))) {
+		|| !(mpk->pointPpub1 = ASN1_OCTET_STRING_dup(msk->pointPpub1))
+		|| !(mpk->pointPpub2 = ASN1_OCTET_STRING_dup(msk->pointPpub2))) {
 		SM9err(SM9_F_SM9_EXTRACT_PUBLIC_PARAMETERS, ERR_R_MALLOC_FAILURE);
 		goto end;
 	}

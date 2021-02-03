@@ -97,7 +97,8 @@ struct SM9_MASTER_KEY_st {
 	ASN1_OBJECT *pairing;
 	ASN1_OBJECT *scheme;
 	ASN1_OBJECT *hash1;
-	ASN1_OCTET_STRING *pointPpub;
+	ASN1_OCTET_STRING *pointPpub1;
+	ASN1_OCTET_STRING *pointPpub2;
 
 	/* private */
 	BIGNUM *masterSecret;
@@ -113,12 +114,14 @@ struct SM9_KEY_st {
 	ASN1_OBJECT *pairing;
 	ASN1_OBJECT *scheme;
 	ASN1_OBJECT *hash1;
-	ASN1_OCTET_STRING *pointPpub;
+	ASN1_OCTET_STRING *pointPpub1;
+	ASN1_OCTET_STRING *pointPpub2;
 	ASN1_OCTET_STRING *identity;
 	ASN1_OCTET_STRING *publicPoint;
 
 	/* private */
-	ASN1_OCTET_STRING *privatePoint;
+	ASN1_OCTET_STRING *privatePoint1;
+	ASN1_OCTET_STRING *privatePoint2;
 
 	int references;
 	int flags;
@@ -160,6 +163,23 @@ const BIGNUM *SM9_get0_generator2_x0(void);
 const BIGNUM *SM9_get0_generator2_x1(void);
 const BIGNUM *SM9_get0_generator2_y0(void);
 const BIGNUM *SM9_get0_generator2_y1(void);
+const BIGNUM *SM9_get0_inv_unit(void);
+const BIGNUM *SM9_get0_inv_unit_montgomery(void);
+const BIGNUM *SM9_get0_one_montgomery(void);
+const BIGNUM *SM9_get0_inv_neg_2_montgomery(void);
+const BIGNUM *SM9_get0_t(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto1(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto2(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto3(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto4(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto5(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto7(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto8(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto9(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto10(void);
+const BIGNUM *SM9_get0_fast_final_expo_pto11(void);
+const BIGNUM *SM9_get0_6t5(void);
+const BIGNUM *SM9_get0_6t1(void);
 
 typedef BIGNUM *fp2_t[2];
 typedef fp2_t fp4_t[2];

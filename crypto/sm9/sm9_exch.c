@@ -120,8 +120,8 @@ int SM9_generate_key_exchange(unsigned char *R, size_t *Rlen,
 	}
 
 	/* get Ppube from sk */
-	if (!EC_POINT_oct2point(group, Ppube, ASN1_STRING_get0_data(sk->pointPpub),
-		ASN1_STRING_length(sk->pointPpub), bn_ctx)) {
+	if (!EC_POINT_oct2point(group, Ppube, ASN1_STRING_get0_data(sk->pointPpub1),
+		ASN1_STRING_length(sk->pointPpub1), bn_ctx)) {
 		SM9err(SM9_F_SM9_GENERATE_KEY_EXCHANGE, ERR_R_SM9_LIB);
 		goto end;
 	}
@@ -224,8 +224,8 @@ int SM9_compute_share_key_A(int type,
 	}
 
 	/* parse deA */
-	if (ASN1_STRING_length(skA->privatePoint) != 129
-		|| !point_from_octets(&deA, ASN1_STRING_get0_data(skA->privatePoint), p, bn_ctx)) {
+	if (ASN1_STRING_length(skA->privatePoint2) != 129
+		|| !point_from_octets(&deA, ASN1_STRING_get0_data(skA->privatePoint2), p, bn_ctx)) {
 		SM9err(SM9_F_SM9_COMPUTE_SHARE_KEY_A, ERR_R_SM9_LIB);
 		goto end;
 	}
@@ -398,8 +398,8 @@ int SM9_compute_share_key_B(int type,
 	}
 
 	/* parse deB */
-	if (ASN1_STRING_length(skB->privatePoint) != 129
-		|| !point_from_octets(&deB, ASN1_STRING_get0_data(skB->privatePoint), p, bn_ctx)) {
+	if (ASN1_STRING_length(skB->privatePoint2) != 129
+		|| !point_from_octets(&deB, ASN1_STRING_get0_data(skB->privatePoint2), p, bn_ctx)) {
 		SM9err(SM9_F_SM9_COMPUTE_SHARE_KEY_B, ERR_R_SM9_LIB);
 		goto end;
 	}
